@@ -1,0 +1,30 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+sourceCompatibility = 1.7
+mainClassName = 'nobs.Main'
+
+repositories {
+    mavenCentral()
+}
+
+project.ext {
+    jettyVersion = '8.1.9.v20130131'
+    javaxWsRsVersion = '1.1.1'
+    jerseyVersion = '1.17'
+}
+
+dependencies {
+    compile group: 'org.eclipse.jetty', name: 'jetty-server', version: project.jettyVersion
+    compile group: 'org.eclipse.jetty', name: 'jetty-webapp', version: project.jettyVersion
+    compile group: 'org.eclipse.jetty', name: 'jetty-servlet', version: project.jettyVersion
+    compile group: 'org.eclipse.jetty', name: 'jetty-websocket', version: project.jettyVersion
+
+    compile group: 'javax.ws.rs', name: 'jsr311-api', version: project.javaxWsRsVersion
+
+    compile group: 'com.sun.jersey', name: 'jersey-servlet', version: project.jerseyVersion
+    compile group: 'com.sun.jersey', name: 'jersey-server', version: project.jerseyVersion
+    compile group: 'com.sun.jersey', name: 'jersey-core', version: project.jerseyVersion
+    compile group: 'com.sun.jersey', name: 'jersey-json', version: project.jerseyVersion
+}
+

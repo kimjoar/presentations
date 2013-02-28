@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>WebSockets &amp; Server-Sent Events</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+
+    <script src="remark.js" type="text/javascript">
+      { "highlightLanguage": "no-highlight" }
+    </script>
+    <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,300italic,400|Dosis:300,400|Source+Code+Pro:200,300,400,400bold|Vollkorn:400italic' rel='stylesheet' type='text/css'>
+    <style type="text/css" media="screen">
+        h1, h2, h3 { font-family: 'Dosis', sans-serif; }
+        h1 { font-weight: 300; font-size: 50px; }
+        p, li { font-family: 'Source Sans Pro', sans-serif; font-weight: 300; }
+        code { font-family: 'Source Code Pro', sans-serif !important; }
+        pre code { background-color: #fff; border-top: 5px solid #ddd; border-bottom: 5px solid #ddd; }
+        h1 code { font-weight: 300; font-size: 1em !important; background-color: #eee; padding: 0px 5px; border-radius: 5px; }
+        img { max-width: 100%; }
+        blockquote p { font-family: 'Vollkorn', serif; font-style: italic; font-weight: 400; }
+        .hugeQuote blockquote p { font-size: 3.5em; }
+
+        .frontpage h1 { font-size: 5em; }
+        .large { font-size: 4em; font-family: 'Dosis', sans-serif; }
+        .huge  { font-size: 5em; font-family: 'Dosis', sans-serif; }
+
+        .red       { background-color: #E8664E; color: #fff; }
+        .green     { background-color: #79A700; color: #fff; }
+        .blue      { background-color: #449BB5; color: #fff; }
+        .dark-blue { background-color: #043D5D; color: #fff; }
+        .yellow    { background-color: #F5E653; color: #fff; }
+        .black     { background-color: #000000; color: #fff; }
+
+        .position { display: none; }
+
+        .codercat img {
+          position: absolute;
+          top: -50px;
+          left: 0;
+          margin-left: 20%;
+        }
+        .codercat .me {
+          position: absolute;
+          top: 155px;
+          width: 300px;
+          text-align: center;
+          left: 40px;
+          font-size: 50px;
+          font-family: 'Dosis', sans-serif;
+        }
+
+        #slideshow .slide .html5 {
+          padding: 0;
+        }
+        .html5 img {
+          width: 70%;
+        }
+
+        .mega { background-color: #1D6D8E; color: #fff; }
+        .mega h1 { font-size: 6em; }
+
+        .cols {}
+        .col1-3 { width: 33.3333%; float: left; }
+
+        .ie10 img {
+          position: absolute;
+          top: 15%;
+          left: 20%;
+          width: 17%;
+        }
+        .ie10-desc {
+          position: absolute;
+          top: 36%;
+          left: 29%;
+        }
+        .opera img {
+          position: absolute;
+          top: 70%;
+          left: 42%;
+          width: 17%;
+        }
+        .opera-desc {
+          position: absolute;
+          top: 92%;
+          left: 48.4%;
+        }
+        .firefox img {
+          position: absolute;
+          top: 60%;
+          left: 70%;
+          width: 17%;
+        }
+        .chrome img {
+          position: absolute;
+          top: 60%;
+          left: 14%;
+          width: 17%;
+        }
+        .safari img {
+          position: absolute;
+          top: 15%;
+          left: 60%;
+          width: 17%;
+        }
+
+        .socketio-browsers {
+          position: absolute;
+          left: 17%;
+          bottom: 23%;
+          width: 20%;
+        }
+        .socketio-transports {
+          position: absolute;
+          right: 18%;
+          bottom: 20%;
+          width: 30%;
+        }
+
+        .atmosphere img { max-width: 80%; }
+
+        .foreverframe { position: absolute; left: 18%; top: 73%;}
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle, black, frontpage
+
+# Websockets <br> &amp; <br> Server-Sent Events
+
+---
+
+class: center, middle, codercat
+
+![](images/codercat.jpg)
+
+.me[Mitt navn er Kim Joar]
+
+---
+
+class: center, middle, html5
+
+![](images/HTML5-logo.svg)
+
+---
+
+class: mega, middle, center
+
+# "Legacy" web
+
+---
+
+# Polling
+
+Kontinuerlige Ajax-kall som svarer med det samme
+
+Mye HTTP-overhead
+
+Polling-logikk i klienten
+
+```
+1 GET = 1 HTTP respons-header og kanskje data
+```
+
+---
+
+# Long-polling
+
+```javascript
+(function poll(){
+
+    $.ajax({
+        url: "/some-url",
+        dataType: "json",
+        timeout: 30000,
+        success: function(data) {
+
+            // gjør noe med data-en
+
+        },
+        complete: poll
+    });
+
+})();
+```
+
+---
+
+class: middle, center
+
+HTTP 1.1 spec-en:
+
+> "A single-user client SHOULD NOT maintain<br> more than 2 connections with any server or proxy."
+
+---
+
+# Long-polling
+
+Får svar når data er klar
+
+Mindre HTTP-overhead
+
+Polling-logikk i klienten
+
+```
+1 GET = 1 HTTP respons-header og mest sannsynlig data
+```
+
+---
+
+# Streaming
+
+Bruker `<iframe>` og HTTP header: `Transfer-Encoding: chunked`
+
+Holder forbindelsen åpen "for alltid"
+
+`=>` "forever frame"
+
+Appender `<script>`-tags i `<iframe>`-en
+
+Feilhåndtering er vanskelig
+
+Umulig å vite tilstand
+
+---
+
+class: middle, center, red
+
+Oh, come on …
+
+---
+
+class: middle, center, mega
+
+# WebSockets
+
+---
+
+# WebSockets
+
+Bidirectional — server og klient kan sende og motta
+
+Full-duplex — server og klient kan sende samtidig
+
+Ikke over HTTP — egen protokoll på toppen av TCP
+
+Minimal overhead
+
+Ingen same-origin policy
+
+---
+
+class: middle, center
+
+![](images/gauges.png)
+
+---
+
+class: middle, center
+
+![](images/scout.png)
+
+---
+
+# Hvor vanskelig er det å komme igang?
+
+`ws.js`
+
+```javascript
+var ws = new WebSocket('ws://localhost:8123');
+
+
+
+
+
+
+
+&nbsp;
+```
+
+---
+
+# Hvor vanskelig er det å komme igang?
+
+`ws.js`
+
+```javascript
+var ws = new WebSocket('ws://localhost:8123');
+
+ws.onopen = function() {
+    ws.send('yay! we connected!');
+};
+
+
+
+&nbsp;
+```
+
+---
+
+# Hvor vanskelig er det å komme igang?
+
+`ws.js`
+
+```javascript
+var ws = new WebSocket('ws://localhost:8123');
+
+ws.onopen = function() {
+    ws.send('yay! we connected!');
+};
+
+ws.onmessage = function(event) {
+    console.log("Received from server: " + event.data);
+};
+```
+
+---
+
+# Hvor vanskelig er det å komme igang?
+
+`ws.js`
+
+```javascript
+var ws = new WebSocket('ws://localhost:8123');
+
+ws.onopen = function() {
+    ws.send('yay! we connected!');
+};
+
+ws.onmessage = function(event) {
+    console.log("Received from server: " + event.data);
+};
+```
+
+Legger den i en HTML-fil og kjører opp en server:
+
+```
+$ python -m SimpleHTTPServer
+```
+
+---
+
+# Hvor vanskelig er det å komme igang?
+
+`app.js`
+
+```javascript
+var WebSocketServer = require('ws').Server;
+var wss = new WebSocketServer({ port: 8123 });
+
+
+
+
+
+
+
+&nbsp;
+```
+
+---
+
+# Hvor vanskelig er det å komme igang?
+
+`app.js`
+
+```javascript
+var WebSocketServer = require('ws').Server;
+var wss = new WebSocketServer({ port: 8123 });
+
+wss.on('connection', function(ws) {
+
+
+
+
+    ws.send('Server says hello');
+});
+```
+
+---
+
+# Hvor vanskelig er det å komme igang?
+
+`app.js`
+
+```javascript
+var WebSocketServer = require('ws').Server;
+var wss = new WebSocketServer({ port: 8123 });
+
+wss.on('connection', function(ws) {
+    ws.on('message', function(message) {
+        console.log('Received from client: %s', message);
+    });
+
+    ws.send('Server says hello');
+});
+```
+
+---
+
+# Hvor vanskelig er det å komme igang?
+
+`app.js`
+
+```javascript
+var WebSocketServer = require('ws').Server;
+var wss = new WebSocketServer({ port: 8123 });
+
+wss.on('connection', function(ws) {
+    ws.on('message', function(message) {
+        console.log('Received from client: %s', message);
+    });
+
+    ws.send('Server says hello');
+});
+```
+
+Og kjører opp app-en:
+
+```sh
+$ node app.js
+```
+
+---
+
+class: middle, center
+
+![](images/websocket-headers.png)
+
+---
+
+class: middle, center
+
+![](images/websocket-frames.png)
+
+---
+
+class: middle, center
+
+![](images/websocket-client.png)
+
+---
+
+class: middle, center
+
+![](images/websocket-server.png)
+
+---
+
+class: middle, center
+
+WebSocket API (W3C) vs WebSocket Protocol (IETF)
+
+---
+
+# WebSocket-protokollen
+
+Spesifisert i RFC 6455
+
+Egen protokoll over TCP, men det starter som HTTP
+
+---
+
+# WebSocket-protokollen
+
+Spesifisert i RFC 6455
+
+Egen protokoll over TCP, men det starter som HTTP
+
+Request:
+
+```http
+GET / HTTP/1.1
+Host: localhost:8123
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
+Origin: http://localhost:8000
+Sec-WebSocket-Version: 13
+```
+
+---
+
+# WebSocket-protokollen
+
+Spesifisert i RFC 6455
+
+Egen protokoll over TCP, men det starter som HTTP
+
+Request:
+
+```http
+GET / HTTP/1.1
+Host: localhost:8123
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
+Origin: http://localhost:8000
+Sec-WebSocket-Version: 13
+```
+
+Respons:
+
+```http
+HTTP/1.1 101 Switching Protocols
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+```
+
+---
+
+class: middle
+
+Definerer nytt URL-schema: `ws` og `wss`
+
+Designet for å fungere på port 80 og 443
+
+---
+
+class: middle
+
+Utrolig lite overhead per melding
+
+Én enkelt TCP-tilkobling for trafikk i begge retninger
+
+Husk å sjekk `Origin`-header
+
+Autentisering er ikke en del av protokollen
+
+---
+
+class: middle, center
+
+# WebSocket-API-et
+
+---
+
+class: middle, center
+
+W3C Candidate Recommendation
+
+> "significant features are mostly locked"
+
+---
+
+# WebSocket-API-et
+
+```javascript
+var ws = new WebSocket(url[, protocols]);
+```
+
+---
+
+# WebSocket-API-et
+
+```javascript
+var ws = new WebSocket(url[, protocols]);
+```
+
+Eventer:
+
+```javascript
+ws.onopen    = function(event) { };
+ws.onmessage = function(event) { console.log(event.data) };
+ws.onerror   = function(event) { };
+ws.onclose   = function(event) { };
+```
+
+---
+
+# WebSocket-API-et
+
+```javascript
+var ws = new WebSocket(url[, protocols]);
+```
+
+Eventer:
+
+```javascript
+ws.onopen    = function(event) { };
+ws.onmessage = function(event) { console.log(event.data) };
+ws.onerror   = function(event) { };
+ws.onclose   = function(event) { };
+```
+
+Send data:
+
+```javascript
+ws.send(message);
+```
+
+---
+
+class: middle, center
+
+# Nettlesere && WebSockets
+
+---
+
+class: middle, center
+
+# Nettlesere && WebSockets
+
+.ie10[![](images/browsers/ie.svg)]
+
+.ie10-desc[10+]
+
+.chrome[![](images/browsers/chrome.svg)]
+
+.firefox[![](images/browsers/firefox.svg)]
+
+.opera[![](images/browsers/opera.svg)]
+
+.opera-desc[12.1+]
+
+.safari[![](images/browsers/safari.png)]
+
+---
+
+class: middle, center
+
+![](images/socketio.png)
+
+---
+
+class: middle, center
+
+# Socket.IO = "jQuery" for WebSockets
+
+---
+
+class: middle, center, hugeQuote
+
+> "It's care-free realtime"
+
+---
+
+class: middle, center, hugeQuote
+
+> "It's care-free realtime"
+
+.socketio-transports[WebSocket, Adobe® Flash® Socket, AJAX long polling, AJAX multipart streaming, Forever Iframe, JSONP Polling]
+
+.socketio-browsers[IE 5.5+, Safari 3+, Chrome 4+, Firefox 3+, Opera 10.61+]
+
+---
+
+# Socket.IO
+
+`app.js`
+
+```javascript
+var http = require('http');
+var express = require('express');
+
+var app = express();
+var server = http.createServer(app);
+
+
+app.use(express.static(__dirname + '/public'));
+
+server.listen(8123);
+
+
+
+
+
+
+
+&nbsp;
+```
+
+---
+
+# Socket.IO
+
+`app.js`
+
+```javascript
+var http = require('http');
+var express = require('express');
+
+var app = express();
+var server = http.createServer(app);
+var io = require('socket.io').listen(server);
+
+app.use(express.static(__dirname + '/public'));
+
+server.listen(8123);
+
+
+
+
+
+
+
+&nbsp;
+```
+
+---
+
+# Socket.IO
+
+`app.js`
+
+```javascript
+var http = require('http');
+var express = require('express');
+
+var app = express();
+var server = http.createServer(app);
+var io = require('socket.io').listen(server);
+
+app.use(express.static(__dirname + '/public'));
+
+server.listen(8123);
+
+io.sockets.on('connection', function (socket) {
+  socket.emit('news', { hello: 'world' });
+
+
+
+
+});
+```
+
+---
+
+# Socket.IO
+
+`app.js`
+
+```javascript
+var http = require('http');
+var express = require('express');
+
+var app = express();
+var server = http.createServer(app);
+var io = require('socket.io').listen(server);
+
+app.use(express.static(__dirname + '/public'));
+
+server.listen(8123);
+
+io.sockets.on('connection', function (socket) {
+  socket.emit('news', { hello: 'world' });
+
+  socket.on('my other event', function (data) {
+    console.log(data);
+  });
+});
+```
+
+---
+
+# Socket.IO
+
+`index.html`
+
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Node.js - WebSockets with Socket.IO</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="ws.js"></script>
+  </head>
+  <body>
+  </body>
+</html>
+```
+
+---
+
+# Socket.IO
+
+`index.html`
+
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Node.js - WebSockets with Socket.IO</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="ws.js"></script>
+  </head>
+  <body>
+  </body>
+</html>
+```
+
+`ws.js`
+
+```javascript
+var socket = io.connect('http://localhost:8123'); // http, ikke ws
+
+
+
+
+
+&nbsp;
+```
+
+---
+
+# Socket.IO
+
+`index.html`
+
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Node.js - WebSockets with Socket.IO</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="ws.js"></script>
+  </head>
+  <body>
+  </body>
+</html>
+```
+
+`ws.js`
+
+```javascript
+var socket = io.connect('http://localhost:8123');
+
+socket.on('news', function (data) {
+  console.log(data);
+
+  socket.emit('my other event', { my: 'data' });
+});
+```
+
+---
+
+class: middle, center
+
+![](images/pusher.png)
+
+---
+
+class: middle, center
+
+# WebSockets og Java
+
+---
+
+class: middle, center
+
+# JSR 356: Java API for WebSocket
+
+> "This specification targets the Java EE 7 Platform"
+
+---
+
+class: middle
+
+# Tyrus
+
+```java
+@WebSocketEndpoint("/hello")
+public class HelloBean {
+
+    @WebSocketMessage
+    public String sayHello(String name) {
+        return "Hello " + name + "!";
+    }
+}
+```
+
+*alpha alpha alpha alpha*
+
+---
+
+class: middle, center
+
+# Jetty
+
+`WebSocketHandler` og `WebSocketServlet`
+
+---
+
+class: middle
+
+```java
+public class ChatWebSocketHandler extends WebSocketHandler {
+
+    private final Set<ChatWebSocket> webSockets =
+        new CopyOnWriteArraySet<ChatWebSocket>();
+
+    @Override
+    public WebSocket doWebSocketConnect(HttpServletRequest req, String protocol) {
+        return new ChatWebSocket();
+    }
+
+    private class ChatWebSocket implements WebSocket.OnTextMessage {
+        private Connection connection;
+
+        public void onOpen(Connection connection) {
+            this.connection = connection;
+            webSockets.add(this);
+        }
+
+        public void onMessage(String data) {
+            for (ChatWebSocket webSocket : webSockets) {
+                webSocket.connection.sendMessage(data);
+            }
+        }
+
+        public void onClose(int closeCode, String message) {
+            webSockets.remove(this);
+        }
+    }
+}
+```
+
+---
+
+class: middle, center
+
+![](images/play.png)
+
+---
+
+class: middle, center
+
+.atmosphere[![](images/atmosphere.png)]
+
+> "Atmosphere transparently supports WebSockets, Server Side Events (SSE), Long-Polling, HTTP Streaming (Forever frame) and JSONP."
+
+---
+
+class: middle, center
+
+![](images/atmosphere-socketio.png)
+
+---
+
+class: middle
+
+```java
+@AtmosphereHandlerService(path = "/chat",
+        interceptors = { AtmosphereResourceLifecycleInterceptor.class })
+public class SocketIOChatAtmosphereHandler implements AtmosphereHandler {
+
+    @Override
+    public void onRequest(AtmosphereResource r) throws IOException {
+        r.getBroadcaster().broadcast(r.getRequest().getReader().readLine());
+    }
+
+    @Override
+    public void onStateChange(AtmosphereResourceEvent event) throws IOException {
+        AtmosphereResource r = event.getResource();
+        AtmosphereResponse res = r.getResponse();
+
+        if (event.isSuspended() && event.getMessage() != null) {
+            String body = event.getMessage().toString();
+
+            String author = extractAuthor(body);
+            String message = extractMessage(body);
+
+            res.getWriter().write(new Data(author, message).toString());
+        }
+    }
+
+    @Override
+    public void destroy() {
+        // ...
+    }
+}
+```
+
+---
+
+class: middle, center
+
+> "That means the above AtmosphereHandler TRANSPARENTLY supports WebSockets, HTML5 Server Side Events (SSE), HTTP long-polling, HTTP Streaming or the JSONP technique."
+
+---
+
+class: middle, center
+
+# Patterns
+
+---
+
+class: middle, center
+
+WebSockets er på et lavt abstraksjonsnivå
+
+---
+
+class: middle, center
+
+# Events
+
+Bruke WebSockets til pub/sub mellom klient og server
+
+---
+
+class: middle, center
+
+# Channels
+
+Gruppering
+
+Når `>1` ting bruker WebSockets
+
+Pusher og Socket.IO støtter ut av boksen
+
+---
+
+class: middle, center
+
+# Request / response
+
+REST over WS?
+
+---
+
+class: middle, center
+
+# Firehose
+
+Et tonn med data, enorm pushing
+
+---
+
+class: middle, center
+
+![](images/twitter-firehose.png)
+
+---
+
+class: middle, center
+
+# Query / Filter Streams
+
+Registrer et søk, få push når det inntreffer
+
+---
+
+class: middle, center
+
+Standardisering av vanlige patterns i sub-protokoller
+
+---
+
+class: middle,center
+
+![](images/soap-ws.png)
+
+---
+
+class: middle, center
+
+Hvor klart er WebSockets?
+
+---
+
+class: mega, middle, center
+
+# Server-Sent Events
+
+---
+
+class: middle, center
+
+# Server-Sent Events
+
+.huge[≈]
+
+# Streaming – hacks + noen godsaker
+
+.foreverframe["forever frame"]
+
+---
+
+class: middle, center
+
+# Hvorfor?
+
+Superenkelt API
+
+Når du trenger å pushe litt data
+
+HTTP
+
+---
+
+class: middle
+
+```javascript
+var source = new EventSource('/stream');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+&nbsp;
+```
+
+---
+
+class: middle
+
+```javascript
+var source = new EventSource('/stream');
+
+source.addEventListener('message', function(e) {
+    console.log(e.data);
+}, false);
+
+
+
+
+
+source.addEventListener('open', function(e) {
+    console.log('opened');
+}, false);
+
+source.onopen = function(e) {
+    console.log('opened');
+}
+```
+
+---
+
+class: middle
+
+```javascript
+var source = new EventSource('/stream');
+
+source.addEventListener('message', function(e) {
+    console.log(e.data);
+}, false);
+
+source.onmessage = function(e) {
+    console.log(e.data);
+}
+
+source.addEventListener('open', function(e) {
+    console.log('opened');
+}, false);
+
+source.onopen = function(e) {
+    console.log('opened');
+}
+```
+
+---
+
+class: middle
+
+```javascript
+var http = require('http');
+var express = require('express');
+var app = express();
+app.use(express.static(__dirname + '/public'));
+
+var server = http.createServer(app);
+server.listen(8123);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+&nbsp;
+```
+
+---
+
+class: middle
+
+```javascript
+var http = require('http');
+var express = require('express');
+var app = express();
+app.use(express.static(__dirname + '/public'));
+
+var server = http.createServer(app);
+server.listen(8123);
+
+app.get('/stream', function(req, res) {
+    req.socket.setTimeout(Infinity);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+});
+```
+
+---
+
+class: middle
+
+```javascript
+var http = require('http');
+var express = require('express');
+var app = express();
+app.use(express.static(__dirname + '/public'));
+
+var server = http.createServer(app);
+server.listen(8123);
+
+app.get('/stream', function(req, res) {
+    req.socket.setTimeout(Infinity);
+
+    res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive'
+    });
+    res.write('\n');
+
+
+
+
+
+
+
+});
+```
+
+---
+
+class: middle
+
+```javascript
+var http = require('http');
+var express = require('express');
+var app = express();
+app.use(express.static(__dirname + '/public'));
+
+var server = http.createServer(app);
+server.listen(8123);
+
+app.get('/stream', function(req, res) {
+    req.socket.setTimeout(Infinity);
+
+    res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive'
+    });
+    res.write('\n');
+
+    var messageCount = 0;
+    setInterval(function() {
+        messageCount++;
+        res.write('id: ' + messageCount + '\n');
+        res.write('data: msg ' + messageCount + '\n\n');
+    }, 1000);
+});
+```
+
+---
+
+class: middle, center
+
+![](images/sse-console.png)
+
+---
+
+class: middle, center
+
+![](images/sse-with-error.png)
+
+---
+
+class: middle, center
+
+![](images/sse-headers.png)
+
+---
+
+# Én kanal er ikke alltid nok
+
+```javascript
+var source = new EventSource('/stream');
+
+source.addEventListener('message', function(e) {
+    console.log(e.data);
+}, false);
+
+source.addEventListener('userlogon', function(e) {
+    console.log('login', e.data);
+}, false);
+```
+
+---
+
+# Én kanal er ikke alltid nok
+
+```javascript
+var source = new EventSource('/stream');
+
+source.addEventListener('message', function(e) {
+    console.log(e.data);
+}, false);
+
+source.addEventListener('userlogon', function(e) {
+    console.log('login', e.data);
+}, false);
+```
+
+Vanlig data:
+
+```
+data: msg 1\n\n
+```
+
+---
+
+# Én kanal er ikke alltid nok
+
+```javascript
+var source = new EventSource('/stream');
+
+source.addEventListener('message', function(e) {
+    console.log(e.data);
+}, false);
+
+source.addEventListener('userlogon', function(e) {
+    console.log('login', e.data);
+}, false);
+```
+
+Vanlig data:
+
+```
+data: msg 1\n\n
+```
+
+Med eventnavn:
+
+```
+event: userlogon\n
+data: kimjoar\n\n
+```
+
+---
+
+class: middle, center
+
+![](images/sse-event-names.png)
+
+---
+
+# Stoppe streamen
+
+Stoppe klienten:
+
+```javascript
+source.close();
+```
+
+Stoppe serveren:
+
+Returner en HTTP-statuskode != 200 OK
+
+Begge metodene gjør at nettleseren slutter å re-etablere koblingen
+
+---
+
+class: middle, center
+
+Dette er hele spec-en!
+
+---
+
+class: middle, center
+
+# Nettlesere && Server-Sent Events
+
+---
+
+class: middle, center
+
+# Nettlesere && Server-Sent Events
+
+.chrome[![](images/browsers/chrome.svg)]
+
+.firefox[![](images/browsers/firefox.svg)]
+
+.opera[![](images/browsers/opera.svg)]
+
+.opera-desc[11+]
+
+.safari[![](images/browsers/safari.png)]
+
+---
+
+class: middle, center
+
+.atmosphere[![](images/atmosphere.png)]
+
+… igjen
+
+---
+
+class: middle, center
+
+![](images/atmosphere-sse.png)
+
+---
+
+class: middle, center
+
+# WebSockets vs Server-Sent Events
+
+Enveis vs toveis — løser forskjellige problemer
+
+Egen protokoll vs HTTP
+
+Nettleserstøtte (a.k.a. trenger du å støtte IE?)
+
+Fallback vs polyfill
+
+---
+
+class: dark-blue, middle, center
+
+Takk for meg
+
+# Spørsmål?
+
+    </textarea>
+    <div id="slideshow"></div>
+  </body>
+</html>

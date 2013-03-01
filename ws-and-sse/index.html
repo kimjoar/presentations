@@ -651,14 +651,13 @@ class: middle, center, hugeQuote
 ```javascript
 var http = require('http');
 var express = require('express');
-
 var app = express();
 var server = http.createServer(app);
-
+server.listen(8123);
 
 app.use(express.static(__dirname + '/public'));
 
-server.listen(8123);
+
 
 
 
@@ -678,14 +677,13 @@ server.listen(8123);
 ```javascript
 var http = require('http');
 var express = require('express');
-
 var app = express();
 var server = http.createServer(app);
-var io = require('socket.io').listen(server);
+server.listen(8123);
 
 app.use(express.static(__dirname + '/public'));
 
-server.listen(8123);
+var io = require('socket.io').listen(server);
 
 
 
@@ -705,14 +703,13 @@ server.listen(8123);
 ```javascript
 var http = require('http');
 var express = require('express');
-
 var app = express();
 var server = http.createServer(app);
-var io = require('socket.io').listen(server);
+server.listen(8123);
 
 app.use(express.static(__dirname + '/public'));
 
-server.listen(8123);
+var io = require('socket.io').listen(server);
 
 io.sockets.on('connection', function (socket) {
   socket.emit('news', { hello: 'world' });
@@ -732,14 +729,13 @@ io.sockets.on('connection', function (socket) {
 ```javascript
 var http = require('http');
 var express = require('express');
-
 var app = express();
 var server = http.createServer(app);
-var io = require('socket.io').listen(server);
+server.listen(8123);
 
 app.use(express.static(__dirname + '/public'));
 
-server.listen(8123);
+var io = require('socket.io').listen(server);
 
 io.sockets.on('connection', function (socket) {
   socket.emit('news', { hello: 'world' });
@@ -1437,7 +1433,7 @@ class: middle, center
 
 ---
 
-class: middle, center
+class: middle, center, red
 
 # WebSockets vs Server-Sent Events
 

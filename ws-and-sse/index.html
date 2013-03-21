@@ -561,8 +561,11 @@ Eventer:
 ```javascript
 ws.onopen    = function(event) { };
 ws.onmessage = function(event) { console.log(event.data) };
-ws.onerror   = function(event) { };
+ws.onerror   = function(event) { console.log(event.code, event.reason) };
 ws.onclose   = function(event) { };
+
+
+&nbsp;
 ```
 
 ---
@@ -578,8 +581,31 @@ Eventer:
 ```javascript
 ws.onopen    = function(event) { };
 ws.onmessage = function(event) { console.log(event.data) };
-ws.onerror   = function(event) { };
+ws.onerror   = function(event) { console.log(event.code, event.reason) };
 ws.onclose   = function(event) { };
+
+addEventListener("open", function(event) {});
+// ...
+```
+
+---
+
+# WebSocket-API-et
+
+```javascript
+var ws = new WebSocket(url[, protocols]);
+```
+
+Eventer:
+
+```javascript
+ws.onopen    = function(event) { };
+ws.onmessage = function(event) { console.log(event.data) };
+ws.onerror   = function(event) { console.log(event.code, event.reason) };
+ws.onclose   = function(event) { };
+
+addEventListener("open", function(event) {});
+// ...
 ```
 
 Send data:
@@ -941,7 +967,7 @@ public class SocketIOChatAtmosphereHandler implements AtmosphereHandler {
 
     @Override
     public void onRequest(AtmosphereResource r) throws IOException {
-        r.getBroadcaster().broadcast(r.getRequest().getReader().readLine());
+        // ...
     }
 
     @Override

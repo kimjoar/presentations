@@ -300,6 +300,14 @@ class: middle, center
 
 ---
 
+class: middle, center
+
+The end result
+
+![](images/build.png)
+
+---
+
 # Task 1
 
 Run `npm install`
@@ -310,7 +318,7 @@ In `make.js`:
 
 Create a `build` target with a `console.log`
 
-Create an `all` target which calls the `build` target
+Create an `all` target which `console.log`s and calls the `build` target
 
 Run each target from the command line
 
@@ -320,13 +328,16 @@ class: middle
 
 ```javascript
 target.all = function() {
+    console.log('all');
     target.build();
 };
 
 target.build = function() {
-    console.log('build, yo');
+    console.log('build');
 };
 ```
+
+![](images/task-1.png)
 
 ---
 
@@ -420,7 +431,11 @@ Create `jshint` target
 
 Run JSHint on `sample.js` with config in `src/main/config/jshint.json`
 
+Now run the `jshint` target.
+
 You should get 3 errors.
+
+Add the `jshint` target to the `all` target.
 
 &nbsp;
 
@@ -431,6 +446,18 @@ You can use the `section` helper inside a target to create a header
 ```javascript
 section('Running JSHint');
 ```
+
+---
+
+class: middle
+
+```javascript
+target.jshint = function() {
+    npmBin('jshint', '--config ' + jshintConfig, 'sample.js');
+};
+```
+
+![](images/task-2.png)
 
 ---
 
@@ -446,21 +473,21 @@ console.log(jsFiles);
 // ['src/file1.js', 'src/file2.js']
 ```
 
-Use `path.join`:
-
-```javascript
-var glob = require('glob');
-var jsFiles = glob.sync(path.join('src', '**', '*.js');
-
-console.log(jsFiles);
-// ['src/file1.js', 'src/file2.js']
-```
-
 ---
 
 # Task 3
 
 Run JSHint on all JavaScript files in `src/main/webapp/js`
+
+&nbsp;
+
+Extras:
+
+Use `path.join` to work better across OSes:
+
+```javascript
+var pngs = path.join(baseDir, 'someFolder', '**', '*.png');
+```
 
 ---
 
@@ -505,11 +532,11 @@ Don't build into the folder you develop in, build into `./someTempFolder`
 
 Only *production-ready* frontend stuff in that folder
 
-Script is responsible for that folder, no one else should touch it
+The script is responsible for that folder, no one else should touch it
 
-## For Java
+## How I handle this in Java
 
-*(We'll look at these later)*
+*(I'll show an example later)*
 
 Build into `./target/someFolder`
 
@@ -527,7 +554,7 @@ Use the `createCleanDir` helper to create `target/bekk-frontend`
 
 &nbsp;
 
-Run r.js, the Require.js optimizer, to create `app.js` in the target
+Run `r.js`, the Require.js optimizer, to create `app.js` in the target
 
 Config-fil: `rjsConfig`-variabelen
 
@@ -539,10 +566,66 @@ node_modules/.bin/r.js -o configfile.js out=outfile.js
 
 &nbsp;
 
+Extras:
+
 Run Less to create a style.css file in the target.
 
 ```
 node_modules/.bin/lessc file.less file.css
+```
+
+---
+
+class: middle
+
+![](images/task-4.png)
+
+```javascript
+target.build = function() {
+    var targetDir = path.join('target', 'bekk-frontend');
+
+    createCleanDir(targetDir);
+
+    var jsFile = path.join(targetDir, 'app.js');
+    var cssFile = path.join(targetDir, 'style.css');
+    var mainLessFile = path.join(webapp, 'css', 'app.less')
+
+    section('Building JavaScript → ' + jsFile);
+    npmBin('r.js', '-o ' + rjsConfig, 'out=' + jsFile);
+
+    section('Building Less → ' + cssFile);
+    npmBin('lessc', mainLessFile, cssFile);
+};
+```
+
+---
+
+class: middle
+
+Push variabler ut + lag små hjelpefunksjoner:
+
+```javascript
+var targetDir = path.join('target', 'bekk-frontend'),
+    jsFile = path.join(targetDir, 'app.js'),
+    cssFile = path.join(targetDir, 'style.css'),
+    mainLessFile = path.join(webapp, 'css', 'app.less')
+
+target.build = function() {
+    createCleanDir(targetDir);
+    buildJS();
+    buildCSS();
+};
+
+var buildJS = function() {
+    section('Building JavaScript → ' + jsFile);
+    npmBin('r.js', '-o ' + rjsConfig, 'out=' + jsFile);
+};
+
+var buildCSS = function() {
+    section('Building Less → ' + cssFile);
+    npmBin('lessc', mainLessFile, cssFile);
+};
+
 ```
 
 ---
@@ -795,6 +878,21 @@ http://karma-runner.github.com/0.8/config/configuration-file.html
 
 ---
 
+class: middle
+
+![](images/task-5.png)
+
+```javascript
+target.test = function() {
+    var settings = '--browsers PhantomJS --single-run';
+
+    section('Running JavaScript tests');
+    npmBin('karma', 'start', 'karma.conf.js', settings);
+};
+```
+
+---
+
 class: middle, center
 
 Karma running in IntelliJ
@@ -840,7 +938,8 @@ Add version to `app.js` (using either folder or file)
 
 ```javascript
 // we can for example create a version using moment.js
-var version = moment().format('YYYYDDmm');
+var moment = require('moment');
+var version = moment().format('YYYYMMDD');
 ```
 
 &nbsp;
@@ -863,6 +962,29 @@ var version = process.env.VERSION;
 
 ---
 
+class: middle
+
+![](images/task-6.png)
+
+```javascript
+var version = process.env.VERSION || moment().format('YYYYMMDD');
+
+var jsFile = path.join(targetDir, 'app-' + version + '.js'),
+var cssFile = path.join(targetDir, 'style-' + version + '.css'),
+
+var buildJS = function() {
+    section('Building JavaScript → ' + jsFile);
+    npmBin('r.js', '-o ' + rjsConfig, 'out=' + jsFile);
+};
+
+var buildCSS = function() {
+    section('Building Less → ' + cssFile);
+    npmBin('lessc', mainLessFile, cssFile);
+};
+```
+
+---
+
 # index.html
 
 One for dev, one for prod
@@ -874,7 +996,39 @@ One for dev, one for prod
 Use Hogan.js to compile `src/main/webapp/index.mustache` to target
 
 ```javascript
+var hogan = require('hogan');
 hogan.compile(mustache).render(data);
+```
+
+---
+
+class: middle
+
+```javascript
+target.build = function() {
+    // ...
+
+    buildIndexHtml();
+
+    // ...
+}
+
+var buildIndexHtml = function() {
+    var htmlFile = path.join(targetDir, 'index.html');
+
+    section('Building HTML → ' + htmlFile);
+
+    var mustache = fs.readFileSync(indexFile).toString(),
+    var template = hogan.compile(mustache);
+    var html = template.render({
+        cssFile: cssFileName,
+        jsFile: jsFileName
+    });
+
+    fs.writeFileSync(htmlFile, html);
+
+    success();
+};
 ```
 
 ---
@@ -882,6 +1036,8 @@ hogan.compile(mustache).render(data);
 class: middle, center
 
 Let's take a look at my code
+
+(and how we can run our build from Maven)
 
 ---
 
@@ -897,7 +1053,7 @@ class: middle, center
 
 [Gzip files](http://nodejs.org/api/zlib.html)
 
-Optimize images, e.g. `brew install optipng` and `npm install optipng-bin`
+Optimize images, e.g. `brew install optipng` and `npm install --save optipng-bin`
 
 [Data URIs](http://www.nczonline.net/blog/2010/07/06/data-uris-make-css-sprites-obsolete/) in CSS for small images (See 'base64' in [`fs` docs](http://nodejs.org/api/fs.html))
 

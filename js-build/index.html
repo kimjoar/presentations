@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Building JavaScript apps</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+
+    <script src="remark.js" type="text/javascript">
+      { "highlightLanguage": "no-highlight" }
+    </script>
+    <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,300italic,400|Dosis:300,400|Source+Code+Pro:200,300,400,400bold|Vollkorn:400italic' rel='stylesheet' type='text/css'>
+    <style type="text/css" media="screen">
+        h1, h2, h3 { font-family: 'Dosis', sans-serif; }
+        h1 { font-weight: 300; font-size: 50px; }
+        p, li { font-family: 'Source Sans Pro', sans-serif; font-weight: 300; }
+        code { font-family: 'Source Code Pro', sans-serif !important; }
+        pre code { background-color: #fff; border-top: 5px solid #ddd; border-bottom: 5px solid #ddd; }
+        h1 code { font-weight: 300; font-size: 1em !important; background-color: #eee; padding: 0px 5px; border-radius: 5px; }
+        img { max-width: 100%; }
+        blockquote p { font-family: 'Vollkorn', serif; font-style: italic; font-weight: 400; }
+        .hugeQuote blockquote p { font-size: 3.5em; }
+
+        a { color: blue; text-decoration: none; }
+
+        .frontpage h1 {}
+        .large { font-size: 4em; font-family: 'Dosis', sans-serif; }
+        .huge  { font-size: 5em; font-family: 'Dosis', sans-serif; }
+        .repo  { font-size: 2em; }
+
+        .red       { background-color: #E8664E; color: #fff; }
+        .green     { background-color: #79A700; color: #fff; }
+        .blue      { background-color: #449BB5; color: #fff; }
+        .dark-blue { background-color: #043D5D; color: #fff; }
+        .yellow    { background-color: #F5E653; color: #fff; }
+        .black     { background-color: #000000; color: #fff; }
+
+        .position { display: none; }
+
+        .mega { background-color: #1D6D8E; color: #fff; }
+        .mega h1 { font-size: 6em; }
+
+        .cols {}
+        .col1-2 { width: 50%; float: left; }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle, red, frontpage
+
+# Building JavaScript apps
+
+---
+
+class: middle, center
+
+# dev → prod
+
+---
+
+class: middle, center
+
+Automating your infrastructure
+
+---
+
+# Tasks
+
+Run JSHint
+
+Run JavaScript tests
+
+Find test coverage
+
+Minify JavaScript
+
+Less to CSS
+
+Add version to index.html, CSS, JavaScript
+
+Create index.html
+
+Create gzipped files
+
+Optimize images
+
+Prepare target folder
+
+---
+
+class: center, middle
+
+# Java
+
+vs
+
+# Node.js
+
+---
+
+class: middle, center
+
+![](images/wro4j.png)
+
++
+
+Rhino &amp; HtmlUnit
+
+---
+
+class: center, middle
+
+# Scripts
+
+vs
+
+# Plugins
+
+---
+
+class: center, middle
+
+# More control
+
+vs
+
+# More out of the box
+
+---
+
+class: middle, center
+
+# In favor of script
+
+Do whatever you want
+
+Don't need to understand yet another thing
+
+Full control
+
+---
+
+class: middle, center
+
+# In favor of plugins
+
+Less code to write yourself
+
+Lot's of common things solved already
+
+Only configuration
+
+---
+
+class: middle,center
+
+![](images/gruntjs.png)
+
+---
+
+class: middle,center
+
+![](images/shelljs.png)
+
+---
+
+class: middle
+
+> The main reason why I decided to write my build scripts in plain JS is because I want them to be flexible and easy to edit.
+
+.right[[Miller Medeiros](http://blog.millermedeiros.com/node-js-ant-grunt-and-other-build-tools/)]
+
+---
+
+# Superfast intro to Node.js
+
+CommonJS
+
+```javascript
+var moment = require('moment');
+```
+
+Core modules: `fs`, `path`, `events`, `http`, `zlib`, …
+
+&nbsp;
+
+Async vs sync &mdash; `fs.readFile` vs `fs.readFileSync`
+
+&nbsp;
+
+No cross-browser stuff, only V8
+
+&nbsp;
+
+npm — Package manager for Node.js
+
+* `package.json` &mdash; specify dependencies
+* `npm install` &mdash; install dependencies
+* `npm install --save {package}` &mdash; install package and add to `package.json`
+
+---
+
+# ShellJS
+
+`build.js`
+
+```javascript
+require('shelljs/global');
+
+if (!which('git')) {
+  echo('Sorry, this script requires git');
+  exit(1);
+}
+
+// Copy files to release dir
+mkdir('-p', 'out/Release');
+cp('-R', 'stuff/*', 'out/Release');
+
+// Run external tool synchronously
+if (exec('git commit -am "Auto-commit"').code !== 0) {
+  echo('Error: Git commit failed');
+  exit(1);
+}
+```
+
+Run it
+
+```sh
+$ node build.js
+```
+
+---
+
+class: middle
+
+Makefile inspired &mdash; `make.js`:
+
+```javascript
+require('shelljs/make');
+
+target.all = function() {
+    target.test();
+    target.build();
+};
+
+target.test = function() {
+    // run tests
+};
+
+target.build = function() {
+    echo("Minifying JavaScript files");
+
+    res = exec('node minify.js');
+
+    if (res.code !== 0) {
+        echo("... failed");
+        exit(1);
+    }
+};
+```
+
+Can run specific target
+
+```sh
+$ node make.js [target]
+```
+
+---
+
+class: middle, center
+
+.repo[github.com/kjbekkelund/js-build]
+
+---
+
+# Regular Java directory structure
+
+`+` some JS specific files
+
+```
+.
+|-- karma.conf.js
+|-- make.js
+|-- package.json
+|-- pom.xml
+|-- src
+|   |-- main
+|   |   |-- java
+|   |   |-- config
+|   |   `-- webapp
+|   |       |-- index.html
+|   |       |-- WEB-INF
+|   |       |-- css
+|   |       |-- images
+|   |       |-- js
+|   |       `-- vendor
+|   `-- test
+|       `-- js
+`-- target
+```
+
+---
+
+# Task 1
+
+Run `npm install`
+
+&nbsp;
+
+In `make.js`:
+
+Create a `build` target with a `console.log`
+
+Create an `all` target which calls the `build` target
+
+Run each target from the command line
+
+---
+
+class: middle
+
+```javascript
+target.all = function() {
+    target.build();
+};
+
+target.build = function() {
+    console.log('build, yo');
+};
+```
+
+---
+
+# NPM binaries
+
+`npm install` creates a `node_modules` folder.
+
+```
+$ tree node_modules -aL 1
+node_modules
+|-- .bin
+|-- jshint
+`-- shelljs
+
+3 directories, 0 files
+```
+
+Some packages have a `bin` folder
+
+Binaries are symlinked to `node_modules/.bin`
+
+```
+$ tree node_modules/.bin
+node_modules/.bin
+|-- jshint -> ../jshint/bin/jshint
+`-- shjs -> ../shelljs/bin/shjs
+
+0 directories, 2 files
+```
+
+---
+
+# Using a binary
+
+JSHint:
+
+```
+$ node_modules/.bin/jshint -h
+Usage:
+  jshint [OPTIONS] [ARGS]
+
+Options:
+      --config STRING    Custom configuration file
+      --reporter STRING  Custom reporter
+      --verbose          Show message codes
+      --show-non-errors  Show additional data generated by jshint
+      --extra-ext STRING Comma-separated list of file extensions to use
+                         (default is .js)
+      --jslint-reporter  Use a jslint compatible reporter (DEPRECATED,
+                         use --reporter=jslint instead)
+      --checkstyle-reporter Use a CheckStyle compatible XML reporter
+                            (DEPRECATED, use --reporter=checkstyle
+                            instead)
+  -v, --version          Display the current version
+  -h, --help             Display help and usage details
+```
+
+---
+
+# Calling binary from ShellJS
+
+```javascript
+var res = exec('node_modules/.bin/jshint -h');
+
+console.log(res)
+// {
+//     code: ..., // edit code
+//     output: ... // stdout + stderr
+// }
+```
+
+## A helper
+
+`npmBin(package, [arg, ...])` — call an NPM binary package
+
+JSHint:
+
+```javascript
+npmBin('jshint', '-h');
+npmBin('jshint', '--config jshint.json', 'file1.js file2.js');
+
+// results in
+// node_modules/.bin/jshint --config jshint.json file1.js file2.js
+```
+
+---
+
+# Task 2
+
+Create `jshint` target
+
+Run JSHint on `sample.js` with config in `src/main/config/jshint.json`
+
+You should get 3 errors.
+
+&nbsp;
+
+Extras:
+
+You can use the `section` helper inside a target to create a header
+
+```javascript
+section('Running JSHint');
+```
+
+---
+
+# Finding our JavaScript files
+
+Using [glob](https://github.com/isaacs/node-glob)
+
+```javascript
+var glob = require('glob');
+var jsFiles = glob.sync('src/**/*.js');
+
+console.log(jsFiles);
+// ['src/file1.js', 'src/file2.js']
+```
+
+Use `path.join`:
+
+```javascript
+var glob = require('glob');
+var jsFiles = glob.sync(path.join('src', '**', '*.js');
+
+console.log(jsFiles);
+// ['src/file1.js', 'src/file2.js']
+```
+
+---
+
+# Task 3
+
+Run JSHint on all JavaScript files in `src/main/webapp/js`
+
+---
+
+```javascript
+require('shelljs/make');
+require('colors');
+
+var _ = require('underscore'),
+    fs = require('fs'),
+    path = require('path'),
+    glob = require('glob');
+
+/*** CONFIG ********/
+
+var webapp = path.join('src', 'main', 'webapp'),
+    config = path.join('src', 'main', 'config'),
+    jshintConfig = path.join(config, 'jshint.json');
+
+/*** TARGETS ********/
+
+target.all = function() {
+    target.jshint();
+    target.build();
+};
+
+target.jshint = function() {
+    var allJsFiles = glob.sync(path.join(webapp, 'js', '**', '*.js'));
+
+    npmBin('jshint', '--config ' + jshintConfig, allJsFiles.join(' '));
+};
+
+target.build = function() {
+    console.log('build');
+};
+```
+
+---
+
+# Target folder
+
+Don't build into the folder you develop in, build into `./someTempFolder`
+
+Only *production-ready* frontend stuff in that folder
+
+Script is responsible for that folder, no one else should touch it
+
+## For Java
+
+*(We'll look at these later)*
+
+Build into `./target/someFolder`
+
+Exclude `src/main/webapp` from WAR
+
+Include build folder in WAR
+
+---
+
+# Task 4
+
+In the `build` target:
+
+Use the `createCleanDir` helper to create `target/bekk-frontend`
+
+&nbsp;
+
+Run r.js, the Require.js optimizer, to create `app.js` in the target
+
+Config-fil: `rjsConfig`-variabelen
+
+This is how we would call it from the command line:
+
+```
+node_modules/.bin/r.js -o configfile.js out=outfile.js
+```
+
+&nbsp;
+
+Run Less to create a style.css file in the target.
+
+```
+node_modules/.bin/lessc file.less file.css
+```
+
+---
+
+# Testing
+
+<div class="cols">
+  <div class="col1-2">
+## Test framework
+  </div>
+
+  <div class="col1-2">
+## Test runner
+  </div>
+</div>
+
+---
+
+# Testing
+
+<div class="cols">
+  <div class="col1-2">
+## Test framework
+
+How you write your tests
+  </div>
+
+  <div class="col1-2">
+## Test runner
+  </div>
+</div>
+
+---
+
+# Testing
+
+<div class="cols">
+  <div class="col1-2">
+## Test framework
+
+How you write your tests
+  </div>
+
+  <div class="col1-2">
+## Test runner
+
+How you run your tests
+  </div>
+</div>
+
+---
+
+# Testing
+
+<div class="cols">
+  <div class="col1-2">
+## Test framework
+
+How you write your tests
+
+* Browser vs Node.js
+* Assertions
+* Reporters
+
+
+  </div>
+
+  <div class="col1-2">
+## Test runner
+
+How you run your tests
+  </div>
+</div>
+
+---
+
+# Testing
+
+<div class="cols">
+  <div class="col1-2">
+## Test framework
+
+How you write your tests
+
+* Browser vs Node.js
+* Assertions
+* Reporters
+
+Examples:
+
+* Jasmine
+* Mocha
+* Buster
+
+
+  </div>
+
+  <div class="col1-2">
+## Test runner
+
+How you run your tests
+  </div>
+</div>
+
+---
+
+# Testing
+
+<div class="cols">
+  <div class="col1-2">
+## Test framework
+
+How you write your tests
+
+* Browser vs Node.js
+* Assertions
+* Reporters
+
+Examples:
+
+* Jasmine
+* Mocha
+* Buster
+
+
+  </div>
+
+  <div class="col1-2">
+## Test runner
+
+How you run your tests
+
+* Start and stop browsers
+* Headless browsers
+* CI support
+
+
+  </div>
+</div>
+
+---
+
+# Testing
+
+<div class="cols">
+  <div class="col1-2">
+## Test framework
+
+How you write your tests
+
+* Browser vs Node.js
+* Assertions
+* Reporters
+
+Examples:
+
+* Jasmine
+* Mocha
+* Buster
+
+
+  </div>
+
+  <div class="col1-2">
+## Test runner
+
+How you run your tests
+
+* Start and stop browsers
+* Headless browsers
+* CI support
+
+Examples:
+
+* Karma/Testacular
+* Testem
+* JsTestDriver
+* (Buster)
+  </div>
+</div>
+
+---
+
+# Testing
+
+<div class="cols">
+  <div class="col1-2">
+## Test framework
+
+How you write your tests
+
+* Browser vs Node.js
+* Assertions
+* Reporters
+
+Examples:
+
+* **Jasmine**
+* Mocha
+* Buster
+
+
+  </div>
+
+  <div class="col1-2">
+## Test runner
+
+How you run your tests
+
+* Start and stop browsers
+* Headless browsers
+* CI support
+
+Examples:
+
+* **Karma/Testacular**
+* Testem
+* JsTestDriver
+* (Buster)
+  </div>
+</div>
+
+---
+
+# Task 5
+
+Run Karma with:
+
+```
+node_modules/.bin/karma start [configFile] [options]
+```
+
+`karma.conf.js` is set to with Jasmine, Require.js, Chrome and to re-run on changes
+
+&nbsp;
+
+Create a `test` target where you run Karma with `karma.conf.js`
+
+Change a JS file, watch the test run again
+
+&nbsp;
+
+In the `test` target, make it run only once and only using PhantomJS
+
+```
+node_modules/.bin/karma start --help
+```
+
+http://karma-runner.github.com/0.8/config/configuration-file.html
+
+---
+
+class: middle, center
+
+Karma running in IntelliJ
+
+![](images/karma-intellij.png)
+
+---
+
+# Versioning
+
+To allow browsers to cache our files, we add versions
+
+Either add version to folder
+
+```bash
+$ tree
+.
+|-- index.html
+`-- 20130827
+    |-- app.js
+    `-- style.css
+
+2 directories, 3 files
+```
+
+Or name the files
+
+```bash
+$ tree
+.
+|-- app-20130827.js
+|-- index.html
+`-- style-20130827.js
+
+1 directory, 3 files
+```
+
+---
+
+# Task 6
+
+Add version to `app.js` (using either folder or file)
+
+```javascript
+// we can for example create a version using moment.js
+var version = moment().format('YYYYDDmm');
+```
+
+&nbsp;
+
+Extras:
+
+You can pass in data to the script using environment variables
+
+```bash
+VERSION=123 node make.js
+```
+
+`VERSION` is now available in `make.js`:
+
+```javascript
+var version = process.env.VERSION;
+```
+
+(you *don't* need to `require('process')`, it's always there)
+
+---
+
+# index.html
+
+One for dev, one for prod
+
+---
+
+# Task 7
+
+Use Hogan.js to compile `src/main/webapp/index.mustache` to target
+
+```javascript
+hogan.compile(mustache).render(data);
+```
+
+---
+
+class: middle, center
+
+Let's take a look at my code
+
+---
+
+class: middle, center
+
+# It's "do what you want" time
+
+---
+
+# Ideas
+
+[Show filesizes](http://nodejs.org/api/fs.html#fs_fs_statsync_path)
+
+[Gzip files](http://nodejs.org/api/zlib.html)
+
+Optimize images, e.g. `brew install optipng` and `npm install optipng-bin`
+
+[Data URIs](http://www.nczonline.net/blog/2010/07/06/data-uris-make-css-sprites-obsolete/) in CSS for small images (See 'base64' in [`fs` docs](http://nodejs.org/api/fs.html))
+
+[Test with Browserstack](http://www.browserstack.com/)
+
+[Control the Complexity](http://www.elijahmanor.com/2012/09/control-complexity-of-your-javascript.html) with JSHint
+
+[Colors](https://github.com/Marak/colors.js) in terminal output
+
+Play with [GruntJS](http://gruntjs.com/)
+
+Run from Maven
+
+---
+
+class: dark-blue, middle, center
+
+# Thank you
+
+    </textarea>
+    <div id="slideshow"></div>
+  </body>
+</html>

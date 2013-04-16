@@ -174,16 +174,82 @@ class: middle
 CommonJS
 
 ```javascript
-var moment = require('moment');
+var http = require('http');
 ```
 
-Core modules: `fs`, `path`, `events`, `http`, `zlib`, …
+---
+
+# Superfast intro to Node.js
+
+CommonJS
+
+```javascript
+var http = require('http');
+```
+
+Core modules: `fs`, `path`, `events`, `http`, `zlib`, … ([nodejs.org/api](http://nodejs.org/api/))
+
+---
+
+# Superfast intro to Node.js
+
+CommonJS
+
+```javascript
+var http = require('http');
+```
+
+Core modules: `fs`, `path`, `events`, `http`, `zlib`, … ([nodejs.org/api](http://nodejs.org/api/))
 
 &nbsp;
+
+Running a script:
+
+```bash
+$ node testfile.js
+```
+
+---
+
+# Superfast intro to Node.js
+
+Async vs sync &mdash; `fs.readFile` vs `fs.readFileSync`
+
+---
+
+# Superfast intro to Node.js
 
 Async vs sync &mdash; `fs.readFile` vs `fs.readFileSync`
 
 &nbsp;
+
+```javascript
+var fs = require('fs');
+
+// ---- SYNC
+
+console.log("starting sync read");
+var data = fs.readFileSync("./sample.js");
+console.log("Characters: " + data.toString().length);
+
+// ---- ASYNC
+
+console.log("starting async read");
+fs.readFile("./sample.js", function(err, data2) {
+    console.log("Characters2: " + data2.length);
+});
+console.log("after async read");
+```
+
+---
+
+# Superfast intro to Node.js
+
+No cross-browser stuff, only V8
+
+---
+
+# Superfast intro to Node.js
 
 No cross-browser stuff, only V8
 
@@ -202,21 +268,21 @@ npm — Package manager for Node.js
 `build.js`
 
 ```javascript
-require('shelljs/global');
+var shell = require('shelljs');
 
-if (!which('git')) {
-  echo('Sorry, this script requires git');
-  exit(1);
+if (!shell.which('git')) {
+  shell.echo('Sorry, this script requires git');
+  shell.exit(1);
 }
 
 // Copy files to release dir
-mkdir('-p', 'out/Release');
-cp('-R', 'stuff/*', 'out/Release');
+shell.mkdir('-p', 'out/Release');
+shell.cp('-R', 'stuff/*', 'out/Release');
 
 // Run external tool synchronously
-if (exec('git commit -am "Auto-commit"').code !== 0) {
-  echo('Error: Git commit failed');
-  exit(1);
+if (shell.exec('git commit -am "Auto-commit"').code !== 0) {
+  shell.echo('Error: Git commit failed');
+  shell.exit(1);
 }
 ```
 
@@ -314,11 +380,21 @@ Run `npm install`
 
 In `make.js`:
 
-Create a `build` target with a `console.log`
+Create a `build` target which contain a `console.log`
 
 Create an `all` target which `console.log`s and calls the `build` target
 
 Run each target from the command line
+
+&nbsp;
+
+Hint:
+
+```bash
+node make.js [target]
+```
+
+Target defaults to "all"
 
 ---
 
@@ -339,31 +415,40 @@ target.build = function() {
 
 ---
 
-# NPM binaries
+class: middle
+
+Our philosophy today: Just use the binaries
+
+&nbsp;
+
+```bash
+$ jshint sample.js
+sample.js: line 3, col 2, Missing semicolon.
+
+1 error
+```
+
+---
+
+# Binaries in NPM
 
 `npm install` creates a `node_modules` folder.
 
 ```
-$ tree node_modules -aL 1
 node_modules
 |-- .bin
 |-- jshint
 `-- shelljs
-
-3 directories, 0 files
 ```
 
-Some packages have a `bin` folder
+&nbsp;
 
 Binaries are symlinked to `node_modules/.bin`
 
 ```
-$ tree node_modules/.bin
 node_modules/.bin
 |-- jshint -> ../jshint/bin/jshint
 `-- shjs -> ../shelljs/bin/shjs
-
-0 directories, 2 files
 ```
 
 ---
@@ -407,9 +492,23 @@ console.log(res)
 // }
 ```
 
+---
+
+# Calling binary from ShellJS
+
+```javascript
+var res = exec('node_modules/.bin/jshint -h');
+
+console.log(res)
+// {
+//     code: ..., // edit code
+//     output: ... // stdout + stderr
+// }
+```
+
 ## A helper
 
-`npmBin(package, [arg, ...])` — call an NPM binary package
+`npmBin(package, [arg, ...])` — call a binary installed with NPM
 
 JSHint:
 
@@ -427,11 +526,11 @@ npmBin('jshint', '--config jshint.json', 'file1.js file2.js');
 
 Create `jshint` target
 
-Run JSHint on `sample.js` with config in `src/main/config/jshint.json`
+Using `npmBin`, run JSHint on `sample.js` with config in `src/main/config/jshint.json`
 
 Now run the `jshint` target.
 
-You should get 3 errors.
+You should get 3 errors. (You don't need to fix them)
 
 Add the `jshint` target to the `all` target.
 
@@ -485,6 +584,10 @@ Use `path.join` to work better across OSes:
 
 ```javascript
 var pngs = path.join(baseDir, 'someFolder', '**', '*.png');
+
+// instead of
+
+var pngs = baseDir + '/someFolder/**/*.png';
 ```
 
 ---
@@ -556,7 +659,7 @@ Run `r.js`, the Require.js optimizer, to create `app.js` in the target
 
 Config-fil: `rjsConfig`-variabelen
 
-This is how we would call it from the command line:
+This is how we would call it from the command line: (insert correct files here)
 
 ```
 node_modules/.bin/r.js -o configfile.js out=outfile.js
@@ -856,7 +959,7 @@ Run Karma with:
 node_modules/.bin/karma start [configFile] [options]
 ```
 
-`karma.conf.js` is set to with Jasmine, Require.js, Chrome and to re-run on changes
+`karma.conf.js` is set to run with Jasmine, Require.js, Chrome and to re-run on changes
 
 &nbsp;
 
@@ -872,7 +975,8 @@ In the `test` target, make it run only once and only using PhantomJS
 node_modules/.bin/karma start --help
 ```
 
-http://karma-runner.github.com/0.8/config/configuration-file.html
+OSX: `brew install phantomjs`<br/>
+Win: Last ned, legg i `C:\Program Files\PhantomJS\phantomjs.exe`
 
 ---
 
@@ -1002,8 +1106,19 @@ One for dev, one for prod
 Use Hogan.js to compile `src/main/webapp/index.mustache` to target
 
 ```javascript
-var hogan = require('hogan');
-hogan.compile(mustache).render(data);
+var hogan = require('hogan.js');
+
+// first read content in index.mustache
+var mustache = // ...
+
+// prepare Mustache input
+var data = {
+    // ...
+}
+
+var html = hogan.compile(mustache).render(data);
+
+// save index.html in target folder
 ```
 
 ---

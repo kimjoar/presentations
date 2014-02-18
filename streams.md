@@ -15,3 +15,4 @@ Ressurser:
 - https://nodejsmodules.org/tags/stream
 - http://thlorenz.com/blog/event-stream
 - http://www.slideshare.net/atcrabtree/functional-programming-with-streams-in-nodejs
+- https://news.ycombinator.com/item?id=7239407

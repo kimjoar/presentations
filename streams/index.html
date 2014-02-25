@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Title</title>
+    <title>Playing with Node.js streams</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <style type="text/css">
       /* Slideshow styles */
@@ -11,6 +11,9 @@
       .down {
           font-size: 3em;
           color: #bbb;
+      }
+      .larger code {
+          font-size: 2em;
       }
     </style>
   </head>
@@ -71,6 +74,20 @@ class: center, middle, huge
 
 ```
 process.stdin
+```
+
+---
+
+class: middle, larger
+
+```javascript
+process.stdin.on('data', function(chunk) {
+    console.log(chunk)
+});
+
+process.stdin.on('end', function() {
+    console.log('done')
+});
 ```
 
     </textarea>

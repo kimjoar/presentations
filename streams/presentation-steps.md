@@ -458,8 +458,62 @@ Nytt byggesystem for Node.js
 
 Stream-basert
 
-Tidlig stadie
+Tidlig stadie, det skjer mye
 
 ---
 
+var concat = require('gulp-concat');
+var uglify = require('gulp-uglify');
+
+gulp.src('./js/**/*.js')
+    .pipe(uglify())
+    .pipe(concat('all.min.js'))
+    .pipe(gulp.dest('./build'));
+
+readable
+    .pipe(transform)
+    .pipe(transform)
+    .pipe(transform)
+    .pipe(writable)
+
+---
+
+Nå kan du gulp
+
+---
+
+En gulp-plugin er en transform-stream.
+
+THAT'S IT.
+
+Det er en stream-plugin med `gulp-`-prefix
+
+---
+
+task, watch
+
+byggescriptet ditt trenger ikke kjøre js-testene dine. `karma start`
+
+---
+
+Noen triks
+
+Iblant er det smart å bruke andre streaming-hjelpere
+
+---
+
+es.concat
+es.pipeline
+
+---
+
+Lage egen plugin, bruk rebase som eksempel
+
+---
+
+Re-iterer sentrale poeng
+
+en stream er bare unix pipes
+
+enkelt, kraftig
 

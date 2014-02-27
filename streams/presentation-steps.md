@@ -1,18 +1,21 @@
+FILNAVN!
+inkluder curl,node et al som kommentarer
+
 process.stdin.on('data', function(chunk) {
     console.log(chunk);
 });
 
 ---
 
-process.stdin.on('data', function(chunk) {
-    console.log(chunk);
-});
+toString chunk
 
-process.stdin.on('end', function() {
-    console.log('done');
+process.stdin.on('data', function(chunk) {
+    console.log(chunk.toString());
 });
 
 ---
+
+lytt på end-event
 
 process.stdin.on('data', function(chunk) {
     console.log(chunk.toString());
@@ -24,6 +27,8 @@ process.stdin.on('end', function() {
 
 ---
 
+skriv ut chunk lengde
+
 process.stdin.on('data', function(chunk) {
     console.log('chunk length', chunk.length);
 });
@@ -33,6 +38,11 @@ process.stdin.on('end', function() {
 });
 
 ---
+
+Tenk på dette generisk som en readable stream
+
+Refactor readable-variabel
+
 
 var readable = process.stdin;
 
@@ -45,6 +55,10 @@ readable.on('end', function() {
 });
 
 ---
+
+Bytt til createReadStream
+
+highWaterMark = 16k vs 64k
 
 var fs = require('fs');
 var readable = fs.createReadStream(process.argv[2]);
@@ -59,175 +73,111 @@ readable.on('end', function() {
 
 ---
 
-HOPP TIL NY FIL SOM INNEHOLDER:
+Litt info om readable streams
 
-var http = require('http');
+> data comes out of a Readable stream.
 
-var server = http.createServer(function (req, res) {
-})
+Readable streams have two "modes": a flowing mode and a non-flowing mode. When in flowing mode, data is read from the underlying system and provided to your program as fast as possible. In non-flowing mode, you must explicitly call stream.read() to get chunks of data out.
 
-server.listen(1337);
+If you attach a data event listener, then it will switch the stream into flowing mode
 
----
-
-var http = require('http');
-
-var server = http.createServer(function (req, res) {
-    var i = 1;
-    req.on('data', function (chunk) {
-        console.log(i++, 'chunk length', chunk.length);
-    })
-
-    req.on('end', function () {
-        res.end('ok');
-    })
-})
-
-server.listen(1337);
+Kan evt kalle #read selv hele veien
 
 ---
 
-node read-server.js
-curl -i -X POST localhost:1337 -H "Content-Type: image/png" -d "@examples/build.png"
+Skriv til http-respons
 
-SE PÅ: HTTP/1.1 100, Transfer-Encoding: chunked
-
----
-
-HOPP TIL NY FIL SOM INNEHOLDER:
-
-var http = require('http');
-
-var server = http.createServer(function (req, res) {
-  req.setEncoding('utf8');
-
-  var body = '';
-  req.on('data', function (chunk) {
-    console.log(i++, 'chunk length', chunk.length);
-    body += chunk;
-  })
-
-  req.on('end', function () {
-    try {
-      var data = JSON.parse(body);
-    } catch (e) {
-      res.statusCode = 400;
-      return res.end('error: ' + e.message);
-    }
-
-    res.write(typeof data);
-    res.end();
-  })
-})
-
-server.listen(1337);
-
----
-
-node input-type.js
-
-curl localhost:1337 -d '{}'
-curl localhost:1337 -d '"foo"'
-curl localhost:1337 -d 'not json'
-curl localhost:1337 -d '@examples/much.json'
-
----
-
-OVER PÅ WRITABLE
-
-HOPP TIL FIL SOM INNEHOLDER:
-
-var http = require('http');
 var fs = require('fs');
+var http = require('http');
 
 var server = http.createServer(function (req, res) {
-    var writable = fs.createWriteStream('some-file.png');
+    // denne kalles hver gang vi har en request
 
-    var i = 1;
-    req.on('data', function (chunk) {
-        console.log('%d - got %d bytes of data', i++, chunk.length);
-    })
+    var readable = fs.createReadStream(process.argv[2]);
 
-    req.on('end', function () {
-        res.end('ok');
-    })
-})
+    readable.on('data', function(chunk) {
+        console.log('chunk length', chunk.length);
+        res.write(chunk);
+    });
+
+    readable.on('end', function() {
+        console.log('done');
+        res.end();
+    });
+});
 
 server.listen(1337);
 
 ---
 
-var http = require('http');
-var fs = require('fs');
+node server.js
 
-var server = http.createServer(function (req, res) {
-    var writable = fs.createWriteStream('some-file.png');
+åpne localhost:1337
 
-    var i = 1;
-    req.on('data', function (chunk) {
-        console.log('%d - got %d bytes of data', i++, chunk.length);
-        writable.write(chunk);
-    })
-
-    req.on('end', function () {
-        writable.end();
-        res.end('ok');
-    })
-})
-
-server.listen(1337);
+sjekk tab-en som viser server.js
 
 ---
 
-node write-server.js
-curl -i -X POST localhost:1337 -H "Content-Type: image/png" --data-binary "@examples/build.png"
+Nå har vi sett en writable stream > HTTP Response
+
+Når man ser on('data') + write, samt on('end') + end: pipe!
 
 ---
 
-var http = require('http');
+Bruk pipe
+
 var fs = require('fs');
+var http = require('http');
 
 var server = http.createServer(function (req, res) {
-    var writable = fs.createWriteStream('./some-other-file.png');
-
-    req.pipe(writable);
-
-    req.on('end', function () {
-        res.end('ok');
-    })
-})
+    var readable = fs.createReadStream(process.argv[2]);
+    readable.pipe(res);
+});
 
 server.listen(1337);
 
 ---
 
 node pipe-server.js
-curl -i -X POST localhost:1337 -H "Content-Type: image/png" --data-binary "@examples/build.png"
+åpne nettleser på localhost:1337
 
 ---
 
 PRAT OM PIPE
 
-on data: skriv data
-on end: end
-
 src.pipe(dest)
+process.stdin.pipe(process.stdout);
+
+Kan vi sette flere pipes sammen?
+
 src.pipe(transform).pipe(dest)
 
 ---
 
-process.stdin.pipe(process.stdout);
+en transform leser og skriver
+det er en sammenheng mellom det som leses og det som skrives
 
 ---
 
 LA OSS LAGE EN TRANSFORM SOM UPPERCASER:
 
+GÅ TIL FIL MED:
+
 var stream = require('stream')
 var uppercase = new stream.Transform()
 
 uppercase._transform = function(chunk, encoding, done) {
-     var data = chunk.toString().toUpperCase();
-     this.push(data);
+    var data = chunk.toString();
+}
+
+---
+
+var stream = require('stream')
+var uppercase = new stream.Transform()
+
+uppercase._transform = function(chunk, encoding, done) {
+     var data = chunk.toString();
+     this.push(data.toUpperCase());
      done()
 }
 
@@ -239,12 +189,14 @@ process.stdin
 
 Kan vi sende objekter?
 
+Push et objekt
+
 var stream = require('stream')
 var uppercase = new stream.Transform()
 
 uppercase._transform = function(chunk, encoding, done) {
-     var data = chunk.toString().toUpperCase();
-     this.push({ data: data });
+     var data = chunk.toString();
+     this.push({ data: data.toUpperCase() });
      done()
 }
 
@@ -262,15 +214,21 @@ En stream jobber default med kun strings eller buffers.
 
 `objectMode`
 
+What’s this objectMode? It’s a flag used to tell a stream that it should be dealing with objects instead of strings or buffers. Streams which deal only with text (which happens a lot in core) can do optimizations and more precise backpressure related to buffering.
+
+As a general rule, whenever you want to read or write javascript objects which are not strings or buffers, you’ll need to put your stream into objectMode. This is really important as any stream not in objectMode will refuse to write, pipe, or read an object.
+
 ---
+
+Legg til objectMode
 
 var stream = require('stream')
 var uppercase = new stream.Transform({ objectMode: true })
 
 uppercase._transform = function(chunk, encoding, done) {
-     var data = chunk.toString().toUpperCase();
-     this.push({ data: data });
-     done()
+     var data = chunk.toString();
+     this.push({ data: data.toUpperCase(); });
+     done();
 }
 
 process.stdin
@@ -291,25 +249,26 @@ Må implementere en `_write(chunk, encoding, next)`-metode
 
 Åpne fil med:
 
-var stream = require('stream')
+var stream = require('stream');
 
 module.exports = function() {
-    var logger = new stream.Writable({ objectMode: true })
+    var logger = new stream.Writable();
 
     logger._write = function(chunk, encoding, next) {
-        console.log(chunk);
-        next();
     };
 
     return logger;
-}
+};
 
 ---
 
-var stream = require('stream')
+legg til objectMode
+console.log i _write
+
+var stream = require('stream');
 
 module.exports = function() {
-    var logger = new stream.Writable({ objectMode: true })
+    var logger = new stream.Writable({ objectMode: true });
 
     logger._write = function (chunk, encoding, next) {
         console.log(chunk);
@@ -317,20 +276,22 @@ module.exports = function() {
     };
 
     return logger;
-}
+};
 
 ---
 
 Gå tilbake
+require logger
+pipe til logger()
 
-var stream = require('stream')
+var stream = require('stream');
 var logger = require('./logger');
 var uppercase = new stream.Transform({ objectMode: true })
 
 uppercase._transform = function(chunk, encoding, done) {
-     var data = chunk.toString().toUpperCase();
-     this.push({ data: data });
-     done()
+     var data = chunk.toString();
+     this.push({ data: data.toUpperCase(); });
+     done();
 }
 
 process.stdin
@@ -340,6 +301,10 @@ process.stdin
 ---
 
 Ikke helt som vi vil enda, split opp og send en push per linje
+
+split newline
+lines.foreach
+
 
 var stream = require('stream')
 var logger = require('./logger')
@@ -359,6 +324,12 @@ process.stdin
 
 ---
 
+SLIDE
+
+Hver input ender potensielt opp i mange output.
+
+---
+
 Kan gjøres uten å måtte lage en instans bare for å implementere `_transform`
 
 THROUGH!
@@ -368,6 +339,9 @@ npm install through2
 `through` vs `through.obj`
 
 ---
+
+Bruk through. Husk objectMode.
+
 
 var through = require('through2');
 var logger = require('./logger')
@@ -385,6 +359,8 @@ process.stdin
 ---
 
 meeeeen pass på. Hva skjer om det brytes midt i linja? Må holde på siste linje og konkatere med det som kommer.
+
+PÅ EN SLIDE:
 
 var through = require('through2');
 var logger = require('./logger');
@@ -412,6 +388,8 @@ process.stdin
 
 BAH! Noen må jo ha håndtert split før?
 
+SLIDE
+
 event-stream!
 
 npm install event-stream
@@ -438,15 +416,25 @@ var logger = require('./logger');
 process.stdin
     .pipe(es.split())
     .pipe(es.map(function(line, done) {
-        done(null, { data: line });
+        done(null, { data: line }); // VANLIG NODE, NULL ER ERROR
     }))
     .pipe(logger());
+
+Med async:
+
+...
 
 ---
 
 Nå har vi sett på tre typer streams
 
+- readable — data kommer ut
+- writable — data går inn
+- transform — data transformeres
+
 Nevn duplex, e.g. socket, websocket
+
+duplex: skriver titt og ofte, leser en gang iblant når man ønsker data
 
 substack og domenictarr
 
@@ -461,6 +449,11 @@ Stream-basert
 Tidlig stadie, det skjer mye
 
 ---
+
+!!! Klargjør noen JavaScript-filer i en mappe og kjør npm install på
+pluginene som trengs.
+
+Gå til gulp-mappe
 
 var concat = require('gulp-concat');
 var uglify = require('gulp-uglify');
@@ -482,17 +475,31 @@ Nå kan du gulp
 
 ---
 
+task, så kjør fra cmd
+
+---
+
 En gulp-plugin er en transform-stream.
+
+(recap: en transform stream ...)
 
 THAT'S IT.
 
 Det er en stream-plugin med `gulp-`-prefix
 
+Den jobber på vinyl-objekter
+
 ---
 
-task, watch
+watch
 
 byggescriptet ditt trenger ikke kjøre js-testene dine. `karma start`
+
+Da kan du også kalle karma med spesifikke parametre mye enklere
+
+---
+
+Gulp setter opp en stream av filer, som kan gradvis prosesseres
 
 ---
 
@@ -510,6 +517,8 @@ es.pipeline
 Lage egen plugin, bruk rebase som eksempel
 
 ---
+
+Hvorfor streams?
 
 Re-iterer sentrale poeng
 

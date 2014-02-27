@@ -3,8 +3,20 @@
   <head>
     <title>Playing with Node.js streams</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <link href='http://fonts.googleapis.com/css?family=Titillium+Web:400,300,600' rel='stylesheet' type='text/css'>
     <style type="text/css">
       /* Slideshow styles */
+      body {
+          font-family: 'Titillium Web', sans-serif;
+      }
+      .dark {
+          background-color: #232323;
+          color: #fff;
+      }
+      .stream {
+          font-size: 3em;
+          font-weight: 300;
+      }
       .huge code {
           font-size: 2em;
       }
@@ -12,8 +24,19 @@
           font-size: 3em;
           color: #bbb;
       }
-      .larger code {
-          font-size: 2em;
+      .larger p {
+          font-size: 4em;
+          font-weight: bold;
+      }
+      .larger p:first-line {
+          font-weight: normal;
+      }
+      .remark-slide-number {
+          display: none;
+      }
+      .unix blockquote {
+          font-size: 3em;
+          font-weight: 300;
       }
     </style>
   </head>
@@ -26,7 +49,7 @@ class: center, middle
 
 ---
 
-class: center, middle
+class: center, middle, dark, stream
 
 So – what is a stream?
 
@@ -40,9 +63,13 @@ ls | sort -r | head -n1
 
 ---
 
-class: center, middle
+class: center, middle, unix
 
-> Unix tradition strongly encourages writing programs that read and write simple, textual, stream-oriented, device-independent formats. Under classic Unix, as many programs as possible are written as simple filters, which take a simple text stream on input and process it into another simple text stream on output.
+> Unix tradition strongly encourages writing programs that<br><strong>read and
+write simple, textual, stream-oriented, device-independent
+formats.</strong>
+
+.right[— Eric Raymond]
 
 ---
 
@@ -86,15 +113,99 @@ process.stdin
 
 class: middle, larger
 
+Data comes out of a<br>Readable stream
+
+---
+
+class: middle, larger
+
+flowing or non-flowing
+
+---
+
+class: middle, larger
+
+Starts flowing when you<br>listen for 'data' events
+
+---
+
+class: middle, dark
+
+let's do something with the chunks
+
+---
+
+class: middle, larger
+
+Data goes into a<br>Writable stream
+
+---
+
+class: middle
+
 ```javascript
-process.stdin.on('data', function(chunk) {
-    console.log(chunk)
+readable.on('data', function(chunk) {
+    writable.write(chunk);
 });
 
-process.stdin.on('end', function() {
-    console.log('done')
+readable.on('end', function() {
+    writable.end();
 });
 ```
+
+---
+
+class: middle, center
+
+Pipe!
+
+```
+src.pipe(dest)
+process.stdin.pipe(process.stdout);
+```
+
+---
+
+What if we want to pipe several together?
+
+```
+src
+    .pipe(transform)
+    .pipe(transform)
+    .pipe(writable)
+```
+
+---
+
+A transform reads and writes data
+
+---
+
+ObjectMode
+
+tell a stream that it should be dealing with objects instead of strings or buffers
+
+any stream not in objectMode will refuse to write, pipe, or read an object
+
+---
+
+potentially one-to-many
+
+---
+
+Simplify stream creation with helper libs
+
+---
+
+`through2`
+
+---
+
+`event-stream`
+
+---
+
+
 
     </textarea>
     <script src="http://gnab.github.io/remark/downloads/remark-0.6.0.min.js" type="text/javascript">

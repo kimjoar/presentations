@@ -1,6 +1,8 @@
 FILNAVN!
 inkluder curl,node et al som kommentarer
 
+1.js
+
 process.stdin.on('data', function(chunk) {
     console.log(chunk);
 });
@@ -9,6 +11,8 @@ process.stdin.on('data', function(chunk) {
 
 toString chunk
 
+2.js
+
 process.stdin.on('data', function(chunk) {
     console.log(chunk.toString());
 });
@@ -16,6 +20,8 @@ process.stdin.on('data', function(chunk) {
 ---
 
 lytt på end-event
+
+3.js
 
 process.stdin.on('data', function(chunk) {
     console.log(chunk.toString());
@@ -28,6 +34,8 @@ process.stdin.on('end', function() {
 ---
 
 skriv ut chunk lengde
+
+4.js
 
 process.stdin.on('data', function(chunk) {
     console.log('chunk length', chunk.length);
@@ -43,6 +51,7 @@ Tenk på dette generisk som en readable stream
 
 Refactor readable-variabel
 
+5.js
 
 var readable = process.stdin;
 
@@ -59,6 +68,8 @@ readable.on('end', function() {
 Bytt til createReadStream
 
 highWaterMark = 16k vs 64k
+
+6.js
 
 var fs = require('fs');
 var readable = fs.createReadStream(process.argv[2]);
@@ -86,6 +97,8 @@ Kan evt kalle #read selv hele veien
 ---
 
 Skriv til http-respons
+
+7.js
 
 var fs = require('fs');
 var http = require('http');
@@ -126,6 +139,8 @@ Når man ser on('data') + write, samt on('end') + end: pipe!
 
 Bruk pipe
 
+8.js
+
 var fs = require('fs');
 var http = require('http');
 
@@ -163,6 +178,8 @@ LA OSS LAGE EN TRANSFORM SOM UPPERCASER:
 
 GÅ TIL FIL MED:
 
+9.js
+
 var stream = require('stream')
 var uppercase = new stream.Transform()
 
@@ -171,6 +188,8 @@ uppercase._transform = function(chunk, encoding, done) {
 }
 
 ---
+
+10.js
 
 var stream = require('stream')
 var uppercase = new stream.Transform()
@@ -190,6 +209,8 @@ process.stdin
 Kan vi sende objekter?
 
 Push et objekt
+
+11.js
 
 var stream = require('stream')
 var uppercase = new stream.Transform()
@@ -222,6 +243,8 @@ As a general rule, whenever you want to read or write javascript objects which a
 
 Legg til objectMode
 
+12.js
+
 var stream = require('stream')
 var uppercase = new stream.Transform({ objectMode: true })
 
@@ -249,6 +272,8 @@ Må implementere en `_write(chunk, encoding, next)`-metode
 
 Åpne fil med:
 
+13.js
+
 var stream = require('stream');
 
 module.exports = function() {
@@ -264,6 +289,8 @@ module.exports = function() {
 
 legg til objectMode
 console.log i _write
+
+14.js
 
 var stream = require('stream');
 
@@ -283,6 +310,8 @@ module.exports = function() {
 Gå tilbake
 require logger
 pipe til logger()
+
+15.js
 
 var stream = require('stream');
 var logger = require('./logger');
@@ -305,6 +334,7 @@ Ikke helt som vi vil enda, split opp og send en push per linje
 split newline
 lines.foreach
 
+16.js
 
 var stream = require('stream')
 var logger = require('./logger')
@@ -342,6 +372,7 @@ npm install through2
 
 Bruk through. Husk objectMode.
 
+17.js
 
 var through = require('through2');
 var logger = require('./logger')
@@ -394,6 +425,8 @@ event-stream!
 
 npm install event-stream
 
+18.js
+
 var through = require('through2');
 var es = require('event-stream');
 var logger = require('./logger')
@@ -426,8 +459,26 @@ Med async:
 
 ---
 
+DUPLEX
+
+---
+
+Ny fil med:
+
+20.js
+
 var through = require('through2');
-var stream = require('stream');
+
+var uppercase = through(function(chunk, encoding, done) {
+    this.push(chunk.toString().toUpperCase());
+    done();
+});
+
+---
+
+21.js
+
+var through = require('through2');
 var net = require('net');
 
 var server = net.createServer(function(connect) {
@@ -471,6 +522,29 @@ pluginene som trengs.
 
 Gå til gulp-mappe
 
+22.js
+
+var gulp = require('gulp');
+
+gulp.src('./js/**/*.js')
+    .pipe('./build');
+
+---
+
+23.js
+
+var gulp = require('gulp');
+var concat = require('gulp-concat');
+
+gulp.src('./js/**/*.js')
+    .pipe(concat('all.js'))
+    .pipe(gulp.dest('./build'));
+
+---
+
+24.js
+
+var gulp = require('gulp');
 var concat = require('gulp-concat');
 var uglify = require('gulp-uglify');
 
@@ -478,6 +552,8 @@ gulp.src('./js/**/*.js')
     .pipe(uglify())
     .pipe(concat('all.min.js'))
     .pipe(gulp.dest('./build'));
+
+---
 
 readable
     .pipe(transform)

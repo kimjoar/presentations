@@ -17,8 +17,27 @@
           font-size: 3em;
           font-weight: 300;
       }
-      .huge code {
+      .pipe pre code {
+          font-size: 2.5em;
+      }
+      .large p {
           font-size: 2em;
+      }
+      .large pre code {
+          font-size: 3em;
+      }
+      .huge p {
+          font-size: 3em;
+      }
+      .huge pre code {
+          font-size: 4em;
+      }
+      .huge ul {
+          padding: 0;
+      }
+      .huge li {
+          font-size: 3em;
+          list-style: none;
       }
       .down {
           font-size: 3em;
@@ -38,14 +57,34 @@
           font-size: 3em;
           font-weight: 300;
       }
+      .frontpage {
+          padding-left: 6em !important;
+          background-color: #232323;
+          color: #fff;
+      }
+      .frontpage h1 {
+          font-size: 7em;
+          line-height: 1.3;
+          font-weight: 300;
+      }
+      .frontpage h1 em {
+          font-style: normal;
+          font-weight: 600;
+      }
+      pre {
+      }
+      pre code {
+          background-color: #fff !important;
+          padding: 0 !important;
+      }
     </style>
   </head>
   <body>
     <textarea id="source">
 
-class: center, middle
+class: middle, frontpage
 
-# Playing with Node.js streams
+# Playing with<br><em>streams</em></br> in Node.js
 
 ---
 
@@ -73,55 +112,17 @@ formats.</strong>
 
 ---
 
-class: middle
+class: middle, larger
 
-Let's try to do the same in Node.js
+Streams are built into Node.js core
 
 ---
 
-class: middle
+class: middle, huge
 
 First, let's read from stdin:
 
 ```javascript
-process.stdin
-```
-
----
-
-class: center, middle, huge
-
-```
-ls | sort -r | head -n1
-```
-
-.down[▼]
-
-```
-files.pipe(sort).pipe(head)
-```
-
----
-
-class: center, middle, huge
-
-```
-readable.pipe(transform).pipe(writable)
-```
-
----
-
-class: center, middle
-
-readable
-
-noe vi kan lese fra
-
----
-
-class: center, middle, huge
-
-```
 process.stdin
 ```
 
@@ -135,19 +136,30 @@ Data comes out of a<br>Readable stream
 
 class: middle, larger
 
-flowing or non-flowing
-
----
-
-class: middle, larger
-
 Starts flowing when you<br>listen for 'data' events
 
 ---
 
-class: middle, dark
+class: middle, dark, larger
 
-let's do something with the chunks
+let's do something with<br>the chunks
+
+---
+
+class: middle, large
+
+```
+Transfer-Encoding: chunked
+Connection: keep-alive
+```
+
+No `Content-Length` — it's not known
+
+---
+
+class: middle, large
+
+Pretty sweet when you have huge files
 
 ---
 
@@ -157,7 +169,7 @@ Data goes into a<br>Writable stream
 
 ---
 
-class: middle
+class: middle, pipe
 
 ```javascript
 readable.on('data', function(chunk) {
@@ -171,21 +183,28 @@ readable.on('end', function() {
 
 ---
 
-class: middle, center
+class: middle, huge
 
-Pipe!
-
-```
-src.pipe(dest)
-process.stdin.pipe(process.stdout);
+```javascript
+readable.pipe(writable);
 ```
 
 ---
 
-What if we want to pipe several together?
+class: middle, huge
+
+Next step: piping several things
 
 ```
-src
+ls | sort -r | head -n1
+```
+
+---
+
+class: middle, huge
+
+```
+readable
     .pipe(transform)
     .pipe(transform)
     .pipe(writable)
@@ -193,35 +212,293 @@ src
 
 ---
 
+class: middle, dark, huge
+
 A transform reads and writes data
 
 ---
 
-ObjectMode
+class: middle, large
 
-tell a stream that it should be dealing with objects instead of strings or buffers
-
-any stream not in objectMode will refuse to write, pipe, or read an object
+```
+TypeError:
+Invalid non-string/buffer chunk
+```
 
 ---
+
+class: middle, large
+
+Streams work on strings and buffers
+
+&nbsp;
+
+---
+
+class: middle, large
+
+Streams work on strings and buffers
+
+… but we can also make it work on objects
+
+---
+
+class: middle, center, large
+
+```
+{ objectMode: true }
+```
+
+tell a stream that it should be dealing<br>with objects instead of strings or buffers
+
+---
+
+class: middle, large
 
 potentially one-to-many
 
+we're not dealing with X kb of data, but with objects
+
 ---
+
+class: middle
+
+This doesn't look very good:
+
+```javascript
+var stream = require('stream');
+var uppercase = new stream.Transform();
+
+uppercase._transform = function(chunk, encoding, done) {
+     var data = chunk.toString();
+     this.push({ data: data.toUpperCase() });
+     done();
+}
+```
+
+---
+
+class: middle, larger
 
 Simplify stream creation with helper libs
 
 ---
 
+class: middle, larger, dark
+
 `through2`
 
 ---
+
+class: middle, large
+
+However …
+
+Our data can be:
+
+```
+some data\ntesting\nyo
+```
+
+what if chunk 1 is:
+
+```
+some data\ntest
+```
+
+and chunk 2 is:
+
+```
+ing\nyo
+```
+
+---
+
+class: middle
+
+The solution is to keep track of last portion of each chunk
+
+```javascript
+var through = require('through2');
+var logger = require('./logger');
+
+process.stdin
+    .pipe(through.obj(
+        function (chunk, encoding, done) {
+            var data = chunk.toString();
+            if (this._lastLineData) data = this._lastLineData + data;
+
+            var lines = data.split('\n');
+            this._lastLineData = lines.pop();
+
+            lines.forEach(function(line) {
+                this.push({ line: line });
+            }, this);
+            done();
+        },
+        function() {
+            if (this._lastLineData) this.push({ line: this._lastLineData });
+            this._lastLineData = null
+        }
+    ))
+    .pipe(logger());
+```
+
+---
+
+class: middle, dark
+
+it's already been solved (of course)
+
+---
+
+class: middle, huge
 
 `event-stream`
 
 ---
 
+class: middle
+
+there is a lot of stream helpers
+
+substack &amp; domenictarr
+
+---
+
+class: middle, huge
+
+so far:
+
+- readable — data comes out
+- writable — data goes in
+- transform — data is transformed
+
+---
+
+class: middle, dark, larger
+
+the last type: duplex
+
+data goes in, data comes out
+
+---
+
+class: middle, huge
+
+```
+a.pipe(b).pipe(a);
+```
+
+---
+
+class: middle, larger
+
+duplex is hard to<br>wrap your head around
+
+---
+
+other things:
+
+flowing vs non-flowing
+
 back pressure
+
+highWaterMark
+
+classic streams
+
+---
+
+class: middle, large
+
+**Want to learn more?**
+
+github.com/substack/stream-handbook
+
+---
+
+class: middle, center, dark, larger
+
+Gulp
+
+---
+
+class: middle, center, large
+
+A new build system for JavaScript based on streams
+
+---
+
+class: middle, center, large
+
+Work on a stream of files
+
+---
+
+class: middle, center, larger, dark
+
+Let's try
+
+---
+
+class: middle, center
+
+That's it!
+
+---
+
+class: middle, large
+
+A gulp plugin is just a transform stream
+
+```javascript
+readable
+    .pipe(transform)
+    .pipe(transform)
+    .pipe(transform)
+    .pipe(writable)
+```
+
+---
+
+Sometimes we need to use other stream helpers
+
+---
+
+Concat files + add compiled templates
+
+---
+
+DRYing up
+
+---
+
+The stream consists of vinyl objects
+
+… which is just a simple virtual file format
+
+---
+
+Let's create our own plugin
+
+---
+
+And you're now an expert Gulp user
+
+---
+
+# Streams recap
+
+Just think about unix pipes
+
+In Node.js it's just events
+
+Lots of simple helpers
+
+Create small, reusable pieces that can be composed together
+
+Simple and powerful
 
     </textarea>
     <script src="http://gnab.github.io/remark/downloads/remark-0.6.0.min.js" type="text/javascript">

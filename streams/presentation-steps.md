@@ -1,5 +1,4 @@
-FILNAVN!
-inkluder curl,node et al som kommentarer
+# stdin
 
 1.js
 
@@ -9,7 +8,7 @@ process.stdin.on('data', function(chunk) {
 
 ---
 
-toString chunk
+# toString chunk
 
 2.js
 
@@ -19,7 +18,7 @@ process.stdin.on('data', function(chunk) {
 
 ---
 
-lytt på end-event
+# lytt på end-event
 
 3.js
 
@@ -33,7 +32,7 @@ process.stdin.on('end', function() {
 
 ---
 
-skriv ut chunk lengde
+# skriv ut chunk lengde
 
 4.js
 
@@ -47,9 +46,9 @@ process.stdin.on('end', function() {
 
 ---
 
-Tenk på dette generisk som en readable stream
+# Refactor readable-variabel
 
-Refactor readable-variabel
+Tenk på dette generisk som en readable stream
 
 5.js
 
@@ -65,9 +64,7 @@ readable.on('end', function() {
 
 ---
 
-Bytt til createReadStream
-
-highWaterMark = 16k vs 64k
+# Bytt til createReadStream
 
 6.js
 
@@ -84,6 +81,10 @@ readable.on('end', function() {
 
 ---
 
+# SLIDE
+
+---
+
 Litt info om readable streams
 
 > data comes out of a Readable stream.
@@ -96,7 +97,7 @@ Kan evt kalle #read selv hele veien
 
 ---
 
-Skriv til http-respons
+# Skriv til http-respons
 
 7.js
 
@@ -137,7 +138,7 @@ Når man ser on('data') + write, samt on('end') + end: pipe!
 
 ---
 
-Bruk pipe
+# Bruk pipe
 
 8.js
 

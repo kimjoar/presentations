@@ -1,19 +1,11 @@
 Writing Beautiful JavaScript Tests
 ==================================
 
-This is a talk about testing
+This is a talk about writing tests
 
 ---
 
-Writing tests != TDD
-
----
-
-TDD is a process for how to write tests
-
----
-
-What will this talk not talk about?
+When I mention "testing", people tend to think a couple of specific things. This talk will be about writing and maintaining tests, but I will not focus on
 
 - TDD
 - Should we write tests?
@@ -22,13 +14,34 @@ What will this talk not talk about?
 
 ---
 
+Writing tests != TDD
+
+---
+
+TDD is a prescriptive process for how to write tests
+
+---
+
 So, what is a test?
 
 ---
 
-Kodeeksempel!
+Video-eksempel: Manuell test i nettleseren
+
+Kodeeksempel: Automatisert test som kjøres i terminalen.
 
 (diskuter automatisert vs manuell)
+
+```
+test(function(t) {
+    var cart = new Cart();
+
+    cart.addItem({ name: "Sleeping bag", price: 299, quantity: 2 });
+    cart.addItem({ name: "Tent", price: 499, quantity: 1 });
+
+    t.equal(cart.totalPrice(), 1097);
+});
+```
 
 ---
 
@@ -66,13 +79,27 @@ Why?
 
 ---
 
-Do we agree on how to write tests?
-
-Example: dhh, martin, beck (https://plus.google.com/events/ci2g23mk0lh9too9bgbp3rbut0k)
+We need to treat tests as we treat production code
 
 ---
 
-Today will not depend on when you write your tests
+Do we agree on how to write tests?
+
+Example:
+
+- dhh, martin, beck (https://plus.google.com/events/ci2g23mk0lh9too9bgbp3rbut0k)
+- http://www.rbcs-us.com/documents/Why-Most-Unit-Testing-is-Waste.pdf
+- http://henrikwarne.com/2014/09/04/a-response-to-why-most-unit-testing-is-waste/
+
+---
+
+What is the cost of testing?
+
+What is the value of testing?
+
+---
+
+Today will not depend on *when* you write your tests
 
 However, it will show you my view on testing
 
@@ -82,9 +109,13 @@ It's important that you understand why I make the choices I make (they will not 
 
 ---
 
+A little bit about me
+
+---
+
 Today I'm going show some of the things we want to achieve and some of the things we want to avoid
 
-This is going to be part philosophy, part techniques, part horrible experiences
+This is going to be part philosophy, part techniques, part horrible experiences, part amazing experiences
 
 ---
 
@@ -105,6 +136,8 @@ Coding alone vs coding in a team
 In a team, the first time you meet a test is usually when it fails
 
 Why did it fail?
+
+Vis et eksempel på horribel test-failure
 
 ---
 
@@ -174,9 +207,68 @@ Make the test obvious
 
 `beforeEach`
 
+DRYing up lines, not concepts
+
+---
+
+Creation helpers
+
+```
+it("displays input section for children if a BU product is chosen", function() {
+    var buCartItem = createCartItem({ type: 'BU' });
+    var cart = createCart({ items: [buCartItem] });
+
+    var registrationView = new RegistrationView({
+        order: createOrder({ cart: cart })
+    });
+
+    registrationView.render();
+
+    expect(registrationView.$('.content').text()).toContain('Opplysninger om barna');
+});
+```
+
 ---
 
 Too long tests
+Too much detail
+Unnecessary detail
+
+```
+it("displays input section for children if a BU product is chosen", function() {
+    var buCartItem = new CartItem({
+        price: 198,
+        quantity: 2,
+        type: 'BU'
+    });
+    var cart = new Cart();
+    cart.add(buCartItem);
+
+    var beneficiary = new Beneficiary({
+        fullName: 'Kim Joar Bekkelund',
+        ssn: '0123456789',
+        sum: 10000
+    })
+    var beneficiaries = new Beneficiaries();
+    Beneficiaries.add(beneficiary);
+
+    var order = new Order = new Order({
+        withdrawalDay: 15,
+        type: 'applet',
+        avtaleGiro: false,
+        cart: cart,
+        beneficiaries: beneficiaries
+    });
+
+    var registrationView = new RegistrationView({
+        order: order
+    });
+
+    registrationView.render();
+
+    expect(registrationView.$('.content').text()).toContain('Opplysninger om barna');
+});
+```
 
 ---
 
@@ -184,9 +276,77 @@ Arrange, act, assert
 
 (beware of too much setup)
 
+```
+it("displays input section for children if a BU product is chosen", function() {
+    expect(registrationView.$('.content').text()).toContain('Opplysninger om barna');
+});
+```
+
 ---
 
 Too much magic
+
+```
+it('validates', function() {
+    expect(order.isValid()).toBe(true);
+});
+```
+
+Fails with:
+
+```
+expected true to be false
+```
+
+Why did it fail? (Faktisk: Nye valideringsregler, person for gammel til å ha livsforsikring av type 2)
+
+Gå opp til nærmeste beforeEach:
+
+```
+beforeEach(function() {
+    var item = new CartItem({
+        type: 'li2',
+        productGroup: 'LI',
+        quantity: 1,
+        price: 105
+    });
+    cart.addItem(item);
+});
+```
+
+So … why did it fail?
+
+Neste beforeEach:
+
+```
+beforeEach(function() {
+    var item = new CartItem({
+        type: 'UL',
+        quantity: 3,
+        price: 401
+    });
+
+    cart.addItem(item);
+
+    order = new Order({
+        beneficiaries: beneficiaries3,
+        cart: cart
+    });
+});
+```
+
+So … why did it fail?
+
+Første beforeEach:
+
+```
+beforeEach(function() {
+    // mye stuff
+});
+```
+
+UL: Disability pension
+LI: Life insurance
 
 ---
 
@@ -214,11 +374,11 @@ Throw away code vs throw away tests. Interesting perspective.
 
 ---
 
-less complex code is simpler to test
+Less complex code is simpler to test
 
 ---
 
-code coverage
+Code coverage
 
 ---
 
@@ -236,7 +396,17 @@ Verdien av gode matchere
 
 ---
 
+Prefer one assertion per test
+
+---
+
 Stay far away from private methods
+
+---
+
+Your tests *need* to be stupidly simple
+
+What happens when our tests are wrong? What happens when we don't understand our tests? What happens when our tests slow us down?
 
 ---
 

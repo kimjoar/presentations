@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Title</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+        <style type="text/css">
+            @import url(http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+            @import url(http://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+            @import url(http://fonts.googleapis.com/css?family=Source+Code+Pro:400,700);
+
+            body { font-family: 'Droid Serif'; }
+            h1, h2, h3 {
+                font-family: 'Yanone Kaffeesatz';
+                font-weight: normal;
+            }
+            .remark-code, .remark-inline-code { font-family: 'Source Code Pro'; }
+            .remark-code { font-size: 25px; }
+            .remark-inline-code {
+                background-color: #eee;
+                padding: 3px 5px 5px 5px;
+                border-radius: 4px;
+            }
+            pre {
+                background-color: #eee;
+                padding: 20px 4em;
+                margin-left: -4em;
+                margin-right: -4em;
+            }
+
+            .remark-notes pre {
+                padding: 10px;
+                margin: 0;
+            }
+            .remark-notes .remark-code { font-size: 18px; }
+
+            .hljs-default .hljs {
+                padding: 0;
+                background: transparent;
+            }
+        </style>
+    </head>
+    <body>
+        <textarea id="source">
+
+class: center, middle
+
+# Introduction to Angular.js
+
+Kim Joar Bekkelund &amp; Ingvild Indrebø, BEKK
+
+---
+
+# Agenda
+
+- What is Angular?
+- Two-way data binding
+- Controller and scope
+- Filters
+- Dependency Injection
+- Services
+- Routing and handling URLs
+- Forms
+- Directives
+- Good practices &amp; anti-patterns
+
+---
+
+class: middle, center
+
+# Angular
+
+A framework that helps build JavaScript applications by letting you extend HTML
+
+---
+
+class: middle, center
+
+One of the most used JavaScript frameworks _right now_
+
+---
+
+class: middle, center
+
+It contains "everything" you need to build a JavaScript app
+
+---
+
+class: middle, center
+
+Built for CRUD
+
+(create, read, update, delete)
+
+---
+
+class: middle, center
+
+# CODE!
+
+Let's start [with templates](http://jsbin.com/hikuc/3/edit) (i.e. your HTML)
+
+---
+
+class: middle, center
+
+So … what happened here?
+
+---
+
+# Angular module
+
+Where your Angular code lives
+
+```javascript
+// Creating a module
+angular.module('myApp', []);
+
+// Adding things to a module
+angular.module('myApp')
+    .controller('GreetingCtrl', function() {
+        // This is an Angular controller.
+    });
+```
+
+---
+
+# Controller and scope
+
+Make stuff available to the template
+
+```javascript
+angular.module('myApp').controller(
+    'GreetingCtrl',
+    function($scope) {
+        // This is were we make things
+        // available for the template.
+        $scope.name = "World";
+    }
+);
+```
+
+Now, we can use `name` in the template
+
+[Example](http://jsbin.com/hikuc/2/edit?html,javascript)
+
+---
+
+class: middle, center
+
+# This is two-way data binding
+
+Update the JavaScript → The HTML stays in sync
+
+Update the HTML → The JavaScript stays in sync
+
+---
+
+# Filter
+
+All content we are displaying can be modified with filters
+
+```
+{{variable | uppercase}}
+```
+
+http://jsbin.com/tehete/12/edit
+
+This can also be used in loops:
+
+http://jsbin.com/tehete/13/edit
+
+We can also create our own filters:
+
+http://jsbin.com/tehete/17/edit
+
+---
+
+class: middle, center
+
+# Dependency Injection!?
+
+---
+
+# Dependency Injection
+
+We've seen it already with `$scope`:
+
+```javascript
+angular.module('myApp').controller(
+    'GreetingCtrl',
+    function($scope) {
+        // This is were we make things
+        // available for the template.
+        $scope.name = "World";
+    }
+);
+```
+
+---
+
+# Dependency Injection
+
+```javascript
+// We create a constant
+angular.module('myApp').value('greet', 'World');
+
+// ... then we inject it
+angular.module('myApp').controller(
+    'GreetingCtrl',
+    function($scope, greet) {
+        $scope.name = greet;
+    }
+);
+```
+
+http://jsbin.com/tehete/18/edit
+
+---
+
+class: middle, center
+
+# Talking to servers
+
+---
+
+# Ajax
+
+A way of communicating with HTTP servers
+
+```javascript
+$http.get('/user/123')
+  .success(function(data, status, headers) {
+    // called asynchronously
+    // when response is available
+  })
+  .error(function(data, status, headers) {
+    // asynchronously if an error occurs
+    // (either on client or server)
+  });
+```
+
+---
+
+# We communicate over HTTP
+
+## HTTP verbs
+
+`GET` &ndash; I want to fetch something
+
+`POST` &amp; `PUT` &ndash; I want to save something
+
+`DELETE` &ndash; I want to delete something
+
+## Status code
+
+200 OK
+
+404 Not found
+
+500 Internal server error
+
+---
+
+# Server responds with JSON
+
+```json
+{
+    "name": "Kim Joar",
+    "address": {
+        "street": "Toftes gate 17",
+        "zip": "0556"
+    },
+    "company": "BEKK",
+    "age": 29,
+    "hobbies": ["hammocks", "hiking"]
+}
+```
+
+(… most likely)
+
+---
+
+# Saving in Angular with `$http`
+
+```javascript
+$http.post('/user', { name: 'Kim Joar' })
+  .success(function(data, status, headers) {
+    // User is successfully saved
+    console.log(data);
+  })
+  .error(function(data, status, headers) {
+    // Something failed when saving user
+  });
+```
+
+---
+
+# Repeated URLs
+
+```javascript
+$http.post('/user', {}, function() {});
+$http.get('/user/123', function() {});
+$http.put('/user/123', function() {});
+$http.delete('/user/123', function() {});
+```
+
+---
+
+# The solution: `$resource`
+
+When you have a REST backend
+
+(basically it uses `GET`, `POST`, etc and status codes such as 200, 404, etc)
+
+Instead of writing the URL everywhere:
+
+```javascript
+var User = $resource('/user/:id', { id: '@id' });
+
+// And then, somewhere else
+// GET without specifying URL
+User.get({ id: 123 }, function(user) {
+    $scope.user = user;
+});
+```
+
+---
+
+# The solution: `$resource`
+
+```javascript
+var User = $resource('/user/:id', { id: '@id' });
+
+// All users: /user
+User.query(function() {});
+
+// One user:
+User.get({ id: 123 }, function() {});
+
+// Create a user:
+var user = new User();
+user.name = "Kim";
+user.$save(function() {});
+
+// ... and more
+```
+
+---
+
+# Including `$resource`
+
+We need to download and load `angular-resource.js`:
+
+https://code.angularjs.org/1.3.0/
+
+```html
+<script src="angular-resource.js"></script>
+```
+
+And then we need to include it into our module:
+
+```javascript
+// Instead of
+angular.module('myApp', []);
+
+// ... we include include it
+angular.module('myApp', ['ngResource']);
+```
+
+Now `$resource` is available for DI
+
+---
+
+# Remember: ASYNC
+
+```javascript
+User.get({ id: 123 }, function() {
+    console.log(1);
+});
+console.log(2);
+```
+
+This will result in:
+
+```
+2
+1
+```
+
+## Why?
+
+---
+
+class: middle, center
+
+# Sharing code
+
+---
+
+# Handling shared logic
+
+We don't want to have this in a controller!
+
+```javascript
+var User = $resource('/user/:id', { id: '@id' });
+```
+
+The URL might be used many places.
+
+Instead, let's create a service:
+
+```javascript
+angular.module('myApp').factory('User',
+  function($resource) {
+    return $resource('/user/:id', { id: '@id' });
+  }
+);
+```
+
+---
+
+# In our controller
+
+We can now use our `User` service:
+
+```javascript
+angular.module('myApp').controller('UserCtrl',
+    function($scope, User) {
+        // All users: /user
+        User.query(function(users) {
+            $scope.users = users;
+        });
+
+        // Specific user: /user/123
+        User.get({ id: 123 }, function(user) {
+            $scope.user = user;
+        });
+    }
+);
+
+```
+
+---
+
+# Adding more
+
+We want to fetch admin users: `/user?admin=true`
+
+```javascript
+angular.module('myApp').factory('User',
+  function($resource) {
+    return $resource('/user/:id', { id: '@id' },
+        admins: {
+            method: 'GET',
+            isArray: true,
+            params: { admin: 'true' }
+        }
+    );
+  }
+);
+```
+
+---
+
+# Using our service
+
+The `User` service in use:
+
+```javascript
+angular.module('myApp').controller('UserCtrl',
+    function($scope, User) {
+        User.admins(function(admins) {
+            $scope.admins = admins;
+        });
+    }
+);
+```
+
+---
+
+class: middle
+
+# Refreshable URLs
+
+Interactive web apps → Change URL when changing state
+
+We want to refresh a page and be on the same place
+
+---
+
+# Routes
+
+```javascript
+angular.module('myApp').config(
+    function($routeProvider) {
+        $routeProvider
+            .when('/user/:id', {
+              templateUrl: 'user.html',
+              controller: 'UserCtrl'
+            })
+            .when('/users', {
+              templateUrl: 'users.html',
+              controller: 'UsersCtrl'
+            })
+            .otherwise({
+              redirectTo: '/users'
+            });
+    });
+```
+
+---
+
+# Template rendered to `ng-view`
+
+```html
+<html>
+  <head>
+    <title>My amazing Angular app</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="angular.js"></script>
+    <script src="routes.js"></script>
+    <script src="userCtrl.js"></script>
+    <script src="usersCtrl.js"></script>
+  </head>
+  <body>
+    <h1>ANGULAR</h1>
+    <div ng-view></div>
+  </body>
+</html>
+```
+
+---
+
+# Template
+
+You don't need to write the controller name like this anymore:
+
+```html
+<div ng-controller="UserCtrl">
+    <h1>{{ name }}</h1>
+    <p>Woho, I'm a user</p>
+</div>
+```
+
+Instead, it's specified in the router. Your template can look like this:
+
+```html
+<div>
+    <h1>{{ name }}</h1>
+    <p>Woho, I'm a user</p>
+</div>
+```
+
+Only specify controllers in routes (or directives, which we'll look at soon)
+
+---
+
+# Remember
+
+Download file, include in `index.html` and include in module:
+
+```javascript
+angular.module('myApp', ['ngResource', 'ngRoute']);
+```
+
+---
+
+# Updating URLs
+
+When the app is changing state we want to change the URL, e.g. when we go from
+a list of users to a specific user:
+
+```javascript
+$scope.goToUser = function() {
+    $location.path('/user/' + $scope.user);
+}
+```
+
+This will update the URL and reload everything (usually very fast, so you won't notice)
+
+This means that the controller state is reset
+
+Keep app state in services
+
+---
+
+class: middle, center
+
+# Forms
+
+---
+
+# Forms
+
+```html
+<div ng-controller="CreateUserCtrl">
+  <form ng-submit="create()">
+    Name:
+    <input type="text" ng-model="user.name" />
+    E-mail:
+    <input type="email" ng-model="user.email" />
+    Gender:
+    <input type="radio" ng-model="user.gender"
+        value="male" />male
+    <input type="radio" ng-model="user.gender"
+        value="female" />female
+    <input type="submit" value="Create" />
+  </form>
+</div>
+```
+
+---
+
+# Posting user
+
+```javascript
+angular.module('myApp').controller('CreateUserCtrl',
+    function($scope, User) {
+        $scope.user = {};
+
+        $scope.create = function() {
+            User.save($scope.user,
+                function() { ... },
+                function() { ... }
+            );
+        }
+    }
+);
+```
+
+http://jsbin.com/roruxe/1/edit
+
+---
+
+# Validation
+
+```html
+<form novalidate ng-submit="create()">
+  <input type="text" ng-model="user.name" required />
+</form>
+```
+
+Set some CSS:
+
+```css
+input.ng-invalid.ng-dirty {
+  background-color: red; color: white;
+}
+
+input.ng-valid.ng-dirty {
+  background-color: green; color: white;
+}
+```
+
+http://jsbin.com/roruxe/2/edit
+
+---
+
+# Validation
+
+```html
+<input type="email" ng-model="user.email" />
+
+<input type="number" ng-model="user.age"
+    min="0" max="100" />
+```
+
+There is a lot of these: https://docs.angularjs.org/api/ng/input
+
+---
+
+# Validation &amp; error messages
+
+```html
+<form name="myForm" novalidate ng-submit="create()">
+    <input type="email" name="myEmail"
+        ng-model="user.email" required />
+
+    <span class="error"
+        ng-show="myForm.myEmail.$error.required">
+        Required!</span>
+</form>
+```
+
+Remember `name`! Can be checked in controller too:
+
+```javascript
+myForm.myEmail.$valid
+myForm.myEmail.$error.email
+```
+
+http://jsbin.com/roruxe/3/edit
+
+---
+
+class: middle, center
+
+# That's it for part 1
+
+---
+
+# Want to learn more?
+
+CodeSchool: https://www.codeschool.com/courses/shaping-up-with-angular-js
+
+Bok: Pro AngularJS
+
+https://docs.angularjs.org/tutorial
+
+https://egghead.io/
+
+---
+
+# "Concluding remarks"
+
+A great place to start
+
+Great for CRUD
+
+Declarative > imperative
+
+Solves a lot of usual problems
+
+Not a silver bullet
+
+Presentation logic in controllers and business logic in services
+
+Create one module per file and don’t alter a module other than where it is defined
+
+        </textarea>
+
+        <script src="remark-latest.min.js" type="text/javascript"></script>
+        <script type="text/javascript">
+            var slideshow = remark.create();
+        </script>
+    </body>
+</html>

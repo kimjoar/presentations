@@ -1,6 +1,8 @@
 
-process.stdin.on('data', function(chunk) {
-    console.log('chunk length', chunk.length);
+process.stdin.on('readable', function() {
+    var r = process.stdin.read();
+    if (r == null) return;
+    console.log('length', r.length);
 });
 
 process.stdin.on('end', function() {

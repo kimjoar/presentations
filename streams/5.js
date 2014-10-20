@@ -1,8 +1,10 @@
 
 var readable = process.stdin;
 
-readable.on('data', function(chunk) {
-    console.log('chunk length', chunk.length);
+readable.on('readable', function() {
+    var r = readable.read();
+    if (r == null) return;
+    console.log('length', r.length);
 });
 
 readable.on('end', function() {
